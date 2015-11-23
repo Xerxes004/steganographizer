@@ -3,6 +3,8 @@
 
 #include <string>
 #include <iostream>
+#include <iomanip>
+#include <vector>
 #include <fstream>
 #include <sstream>
 
@@ -11,7 +13,7 @@ class Steganographizer
 public:
 	Steganographizer();
 	
-	const bool encrypt(
+	const bool ensteginate(
 		const std::string orgImg, 
 		const std::string modImg, 
 	 	const std::string ioFile = "");
@@ -20,10 +22,14 @@ public:
 
 private:
 	void getFileData(const std::string &ioFile, std::string &input);
-	std::string enstegenate(
-		const std::string &originalImg,
-		const std::string &input);
+	
+	std::vector<short> getBytes(
+		const std::string &fileName);
 
+	void enstegrifyImage(
+	 	const std::string &carrierImage, 
+	 	const std::vector<short> &encodedBytes,
+		const std::string payload);
 };
 
 #endif

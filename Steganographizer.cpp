@@ -2,7 +2,7 @@
 
 Steganographizer::Steganographizer(){}
 
-const bool Steganographizer::encrypt(
+const bool Steganographizer::ensteginate(
 	const std::string originalImg, 
    	std::string carrierImg, 
    	const std::string ioFile)
@@ -18,17 +18,55 @@ const bool Steganographizer::encrypt(
 	{
 		this->getFileData(ioFile, payload);
 	}
+	auto originalBytes = this->getBytes(originalImg);
 
-	carrierImg = this->enstegenate(originalImg, payload);
+	enstegrifyImage(carrierImg, originalBytes, payload);
 
 	return false;
 }
 
-std::string Steganographizer::enstegenate(
-	const std::string &originalImg,
-	const std::string &payload)
+void Steganographizer::enstegrifyImage(
+	const std::string &carrierImg,
+	const std::vector<short> &originalBytes,
+	const std::string payload)
 {
+	std::vector<short> newBytes = originalBytes;
 
+	for (int i = 0; i < newBytes.size(); i++)
+	{
+
+	}
+}
+
+std::vector<short> Steganographizer::getBytes(
+	const std::string &originalImgName)
+{
+	std::ifstream originalFile(originalImgName, std::ios::binary);
+	
+	std::vector<short> bytes;
+
+	if (originalFile.is_open() && !originalFile.fail())
+	{
+		originalFile.seekg(0, originalFile.end);
+
+		auto length = originalFile.tellg();
+
+		for (int i = 0; i < length; i++)
+		{
+			originalFile.seekg(i);
+			char c = ' ';
+			originalFile.read(&c, 1);
+			// cast char to short because read function is dumb and doesn't
+			// like shorts
+			bytes.push_back(short(c));
+		}
+	}
+	else
+	{
+		throw std::runtime_error("Failed to open image");
+	}
+
+	return bytes;
 }
 
 void Steganographizer::getFileData(
@@ -48,7 +86,7 @@ void Steganographizer::getFileData(
 	{
 		throw std::runtime_error("Error opening input file");
 	}
-
+	std::cout << "Input File data: " << std::endl;
 	std::cout << input << std::endl;
 }
 

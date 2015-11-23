@@ -46,11 +46,11 @@ int main(int argc, char* argv[])
 				if ((i + 3) < args.size())
 				{
 					ioFileName = args.at(i + 3);
-					steg.encrypt(originalImageName, modifiedImageName, ioFileName);
+					steg.ensteginate(originalImageName, modifiedImageName, ioFileName);
 				}
 				else
 				{
-					steg.encrypt(originalImageName, modifiedImageName);
+					steg.ensteginate(originalImageName, modifiedImageName);
 				}
 			}
 			catch (std::runtime_error &err)
