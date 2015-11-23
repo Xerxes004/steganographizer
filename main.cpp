@@ -20,8 +20,8 @@ int main(int argc, char* argv[])
 		args.push_back(std::string(argv[i]));
 	}
 
-	std::string originalImageName = "";
-	std::string modifiedImageName = "";
+	std::string orgImg = "";
+	std::string modImg = "";
 	std::string ioFileName = "";
 
 	Steganographizer steg;// = new Steganographizer();
@@ -32,8 +32,19 @@ int main(int argc, char* argv[])
 		{
 			if ((i + 2) < args.size())
 			{
-				originalImageName = args.at(i + 1);
-				modifiedImageName = args.at(i + 2);
+				orgImg = args.at(i + 1);
+				modImg = args.at(i + 2);
+
+				if (orgImg.substr(orgImg.size() - 4, 4).compare(".bmp") != 0)
+				{
+					orgImg += ".bmp";
+				}
+				if (modImg.substr(modImg.size() - 4, 4).compare(".bmp") != 0)
+				{
+					modImg += ".bmp";
+				}
+				std::cout << "input image: " << orgImg << std::endl;
+				std::cout << "outpt image: " << modImg << std::endl;
 			}
 			else
 			{
@@ -46,11 +57,11 @@ int main(int argc, char* argv[])
 				if ((i + 3) < args.size())
 				{
 					ioFileName = args.at(i + 3);
-					steg.ensteginate(originalImageName, modifiedImageName, ioFileName);
+					steg.ensteginate(orgImg, modImg, ioFileName);
 				}
 				else
 				{
-					steg.ensteginate(originalImageName, modifiedImageName);
+					steg.ensteginate(orgImg, modImg);
 				}
 			}
 			catch (std::runtime_error &err)
@@ -63,7 +74,13 @@ int main(int argc, char* argv[])
 		{
 			if ((i + 1) < args.size())
 			{
-				modifiedImageName = args.at(i + 1);
+				modImg = args.at(i + 1);
+
+				if (modImg.substr(modImg.size() - 4, 4).compare(".bmp") != 0)
+				{
+					modImg += ".bmp";
+				}
+				std::cout << "outpt image: " << modImg << std::endl;
 			}
 			else
 			{
@@ -76,11 +93,11 @@ int main(int argc, char* argv[])
 				if ((i + 2) < args.size())
 				{
 					ioFileName = args.at(i + 2);
-					steg.decrypt(modifiedImageName, ioFileName);
+					steg.decrypt(modImg, ioFileName);
 				}
 				else
 				{
-					steg.decrypt(modifiedImageName);
+					steg.decrypt(modImg);
 				}
 			}
 			catch (std::runtime_error &err)

@@ -3,8 +3,8 @@
 Steganographizer::Steganographizer(){}
 
 const bool Steganographizer::ensteginate(
-	const std::string originalImg, 
-   	std::string carrierImg, 
+	const std::string orgImgName, 
+   	std::string carrierImgName, 
    	const std::string ioFile)
 {
 	std::string payload = "";
@@ -18,48 +18,87 @@ const bool Steganographizer::ensteginate(
 	{
 		this->getFileData(ioFile, payload);
 	}
-	auto originalBytes = this->getBytes(originalImg);
 
-	enstegrifyImage(carrierImg, originalBytes, payload);
+	auto originalBytes = this->getBytes(orgImgName);
+
+	std::cout << "file " << orgImgName 
+			  << " is " << originalBytes.size() << " bytes long.\n";
+
+	//enstegrifyImage(carrierImgName, originalBytes, payload);
 
 	return false;
 }
 
-void Steganographizer::enstegrifyImage(
-	const std::string &carrierImg,
-	const std::vector<short> &originalBytes,
-	const std::string payload)
-{
-	std::vector<short> newBytes = originalBytes;
-
-	for (int i = 0; i < newBytes.size(); i++)
-	{
-
-	}
-}
-
-std::vector<short> Steganographizer::getBytes(
+std::vector<char> Steganographizer::getBytes(
 	const std::string &originalImgName)
 {
-	std::ifstream originalFile(originalImgName, std::ios::binary);
+	std::ifstream originalImg(originalImgName);
 	
-	std::vector<short> bytes;
+	std::vector<char> bytes;
 
-	if (originalFile.is_open() && !originalFile.fail())
+	std::cout << "reading image... this may take a few seconds\n";
+	if (originalImg.is_open() && !originalImg.fail())
 	{
-		originalFile.seekg(0, originalFile.end);
+		originalImg.seekg(0, originalImg.end);
+		auto filesz = originalImg.tellg();
 
-		auto length = originalFile.tellg();
+		bytes.resize(filesz);
 
-		for (int i = 0; i < length; i++)
+		// makes a thread for each 512kb chunk of image
+		std::vector<std::thread> workerPool;
+
+		const int chunksz = 524288;
+		int numChunks = filesz / chunksz + ((filesz % chunksz == 0) ? 0 : 1);
+
+		workerPool.resize(numChunks);
+		
+		auto processChunk = [&](int beg, const int max)->void
 		{
-			originalFile.seekg(i);
-			char c = ' ';
-			originalFile.read(&c, 1);
-			// cast char to short because read function is dumb and doesn't
-			// like shorts
-			bytes.push_back(short(c));
+			std::ifstream chunkFile(originalImgName);
+
+			if (!chunkFile.fail() && chunkFile.is_open())
+			{
+				while (++beg < max)
+				{
+					chunkFile.seekg(beg);
+					char c = ' ';
+					chunkFile.read(&c, 1);
+					bytes.at(beg) = c;
+				}
+			}
+		};
+
+		int maxIndex = filesz;
+
+		auto start = std::chrono::system_clock::now();
+
+		for (int i = 0; i < workerPool.size(); i++)
+		{
+			int base = i * chunksz * sizeof(char);
+
+			if ((base + chunksz) < maxIndex)
+			{
+				workerPool.at(i) = 
+					std::thread(processChunk, base, base + chunksz - 1);
+			}
+			else
+			{
+				workerPool.at(i) =
+					std::thread(processChunk, base, maxIndex);
+			}
 		}
+
+		for (int i = 0; i < workerPool.size(); i++)
+		{
+			workerPool.at(i).join();
+		}
+
+		auto total = std::chrono::system_clock::now() - start;
+
+		long long runtime = 
+			std::chrono::duration_cast<std::chrono::milliseconds>(total).count();
+
+		std::cout << "read time: " << runtime << "ms\n";
 	}
 	else
 	{
@@ -67,6 +106,30 @@ std::vector<short> Steganographizer::getBytes(
 	}
 
 	return bytes;
+}
+
+void Steganographizer::enstegrifyImage(
+	const std::string &carrierImg,
+	const std::vector<char> &originalBytes,
+	const std::string payload)
+{
+	std::vector<char> modifiedBytes = originalBytes;
+	std::vector<char> payloadMask = expand(payload);
+
+	if (modifiedBytes.size() < originalBytes.size())
+	{
+
+	}
+
+	for (int i = 0; i < modifiedBytes.size(); i++)
+	{
+
+	}
+}
+
+std::vector<char> Steganographizer::expand(const std::string &payload)
+{
+
 }
 
 void Steganographizer::getFileData(

@@ -5,8 +5,12 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <thread>
+#include <mutex>
 #include <fstream>
 #include <sstream>
+
+#include <chrono>
 
 class Steganographizer
 {
@@ -23,13 +27,15 @@ public:
 private:
 	void getFileData(const std::string &ioFile, std::string &input);
 	
-	std::vector<short> getBytes(
+	std::vector<char> getBytes(
 		const std::string &fileName);
 
 	void enstegrifyImage(
 	 	const std::string &carrierImage, 
-	 	const std::vector<short> &encodedBytes,
+	 	const std::vector<char> &encodedBytes,
 		const std::string payload);
+
+	std::vector<char> expand(const std::string &payload);
 };
 
 #endif
