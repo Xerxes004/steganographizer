@@ -13,4 +13,4 @@ Steganographizer.o: Steganographizer.cpp
 	$(CC) -c Steganographizer.cpp
 
 clean:
-	rm *o steg.e
+	rm *o steg.e testoutput.bmp
