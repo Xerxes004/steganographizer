@@ -101,14 +101,55 @@ const std::vector<char> Steganographizer::equipWithPayload(
 	std::vector<char> modifiedBytes = originalBytes;
 	std::vector<char> payloadMask   = expand(payload);
 
-	unsigned short throwOut = 0;
 
-	if (originalBytes.size() < 2)
+
+	int throwOut = getBytesToThrowOut(originalBytes);
+
+	
+
+	/*for (int i = 0; i < modifiedBytes.size(); i++)
+	{
+
+	}*/
+
+	return modifiedBytes;
+}
+
+ImgType Steganographizer::getImgType(const int dWord)
+{
+	auto type = ImgType::NOT_VALID;
+
+	if (dWord & (TYPE_1_BMP_MASK << 16))
+	{
+		type = ImgType::MSFT_BMP_V1;
+	} 
+	else if (dWord & (TYPE_2_BMP_MASK << 16))
+	{
+		type = ImgType::MSFT_BMP_V2;
+	}
+	else
+	{
+		type = ImgType::MSFT_BMP_V3_V4;
+	}
+
+	return type;
+}
+
+int Steganographizer::getBytesToThrowOut(const std::vector<char> &originalBytes)
+{
+	int throwOut = 0;
+
+	if (originalBytes.size() < 4)
 	{
 		throw std::runtime_error("Input image too small, check file.");
 	}
 
-	switch(getImgType(originalBytes.at(0) << 8 | originalBytes.at(1)))
+	int dWord = originalBytes.at(0) << 24 
+			  | originalBytes.at(1) << 16
+			  | originalBytes.at(2) << 8
+			  | originalBytes.at(3);
+
+	switch(getImgType(dWord))
 	{
 	case ImgType::MSFT_BMP_V1:
 		throwOut = 10;
@@ -130,32 +171,7 @@ const std::vector<char> Steganographizer::equipWithPayload(
 		break;
 	}
 
-	/*for (int i = 0; i < modifiedBytes.size(); i++)
-	{
-
-	}*/
-
-	return modifiedBytes;
-}
-
-ImgType Steganographizer::getImgType(const unsigned short firstWord)
-{
-	auto type = ImgType::NOT_VALID;
-
-	if (firstWord & TYPE_1_BMP_MASK)
-	{
-		type = ImgType::MSFT_BMP_V1;
-	} 
-	else if (firstWord & TYPE_2_BMP_MASK)
-	{
-		type = ImgType::MSFT_BMP_V2;
-	}
-	else
-	{
-		type = ImgType::MSFT_BMP_V3_V4;
-	}
-
-	return type;
+	return throwOut;
 }
 
 std::vector<char> Steganographizer::expand(const std::string &payload)

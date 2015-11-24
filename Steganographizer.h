@@ -34,12 +34,13 @@ public:
 	const bool decrypt(std::string modImg, std::string ioFile = "");
 
 private:
-	const unsigned short TYPE_1_BMP_MASK = 0x0;
-	const unsigned short TYPE_2_BMP_MASK = ('M' << 8) | 'B'; // little endian
+	const int TYPE_1_BMP_MASK = 0x0;
+	const int TYPE_2_BMP_MASK = ('M' << 8) | 'B'; // little endian
 
 	void getFileData(std::string &input, const std::string &ioFile);
 	
 	std::vector<char> readBytes(const std::string &fileName);
+
 	void writeBytes(
 		const std::vector<char> &bytes, 
 		const std::string &fileName);
@@ -49,8 +50,9 @@ private:
 		const std::string payload);
 
 	std::vector<char> expand(const std::string &payload);
-
-	ImgType getImgType(const unsigned short firstWord);
+	
+	int getBytesToThrowOut(const std::vector<char> &originalBytes);
+	ImgType getImgType(const int dWord);
 };
 
 #endif
