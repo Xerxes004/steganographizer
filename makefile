@@ -9,7 +9,7 @@ steg.e: Steganographizer.o main.o
 main.o: main.cpp
 	$(CC) -c main.cpp
 
-Steganographizer.o: Steganographizer.cpp
+Steganographizer.o: Steganographizer.cpp Steganographizer.h
 	$(CC) -c Steganographizer.cpp
 
 clean:

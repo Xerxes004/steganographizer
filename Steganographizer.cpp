@@ -2,9 +2,9 @@
 
 Steganographizer::Steganographizer(){}
 
-const bool Steganographizer::ensteginate(
-	const std::string originalImg, 
-   	const std::string carrierImg, 
+void Steganographizer::encrypt(
+	const std::string &original, 
+   	const std::string &courier, 
    	const std::string ioFile)
 {
 	std::string payload = "";
@@ -16,126 +16,67 @@ const bool Steganographizer::ensteginate(
 	}
 	else
 	{
-		this->getFileData(ioFile, payload);
+		getFileData(payload, ioFile);
 	}
 
-	auto originalBytes = this->getBytes(originalImg);
+	std::cout << "reading original image... this may take a few seconds\n";
+	std::vector<char> originalBytes = readBytes(original);
+	std::vector<char> courierBytes  = equipWithPayload(originalBytes, payload);
 
-	this->writeBytes(originalBytes, carrierImg);
-
-	std::cout << "file " << originalImg 
-			  << " is " << originalBytes.size() << " bytes long.\n";
-
-	//enstegrifyImage(carrierImg, originalBytes, payload);
-
-	return false;
+	writeBytes(courierBytes, courier);
 }
 
-std::vector<char> Steganographizer::getBytes(
-	const std::string &originalImgName)
+std::vector<char> Steganographizer::readBytes(const std::string &fileName)
 {
-	std::ifstream originalImg(originalImgName);
+	std::ifstream input(fileName);
 	
 	std::vector<char> bytes;
 
-	std::cout << "reading image... this may take a few seconds\n";
-
-	if (originalImg.is_open() && !originalImg.fail())
+	if (input.is_open() && !input.fail())
 	{
-		originalImg.seekg(0, originalImg.end);
-		auto filesz = originalImg.tellg();
+		input.seekg(0, input.end);
+		auto filesz = input.tellg();
 
 		bytes.resize(filesz);
 
 		// makes a thread for each 512kb chunk of image
 		const int chunksz = 524288;
-		const int numChunks = filesz / chunksz + ((chunksz % filesz == 0) ? 0 : 1);
+		const int chunks = filesz / chunksz + ((chunksz % filesz == 0) ? 0 : 1);
 		
 		std::vector<std::thread> workerPool;
-		workerPool.resize(numChunks);
-		
-		std::mutex m;
-		m.lock();
+		workerPool.resize(chunks);
 
 		auto processChunk = [&](int beg, int max)->void
 		{
-			std::ifstream chunkFile(originalImgName);
+			std::ifstream chunkFile(fileName);
 
 			if (!chunkFile.fail() && chunkFile.is_open())
 			{
 				while (beg < max)
 				{
 					chunkFile.seekg(beg);
-					//char c = ' ';
-					chunkFile.read(&bytes.at(beg), 1);
-					//bytes.at(beg) = c;
-					//if (beg < 10) std::cout << "stored " << c << " at " << beg << std::endl;
-					beg++;
+					chunkFile.read(&bytes.at(beg++), 1);
 				}
 			}
 		};
-		m.unlock();
 
 		int maxIndex = filesz;
 
-		auto start = std::chrono::system_clock::now();
-
 		for (int i = 0; i < workerPool.size(); i++)
 		{
-			int base = i * chunksz * sizeof(char);
-
-			if ((base + chunksz) < maxIndex)
-			{
-				workerPool.at(i) = 
-					std::thread(processChunk, base, base + chunksz);
-			}
-			else
-			{
-				workerPool.at(i) =
-					std::thread(processChunk, base, maxIndex);
-			}
+			int beg = i * chunksz * sizeof(char);
+			int max = (beg + chunksz) < maxIndex ? beg + chunksz : bytes.size();
+			workerPool.at(i) = std::thread(processChunk, beg, max);
 		}
 
 		for (int i = 0; i < workerPool.size(); i++)
 		{
 			workerPool.at(i).join();
 		}
-
-		auto total = std::chrono::system_clock::now() - start;
-
-		long long runtime = 
-			std::chrono::duration_cast<std::chrono::milliseconds>(total).count();
-
-		std::cout << "read time: " << runtime << "ms\n";
 	}
 	else
 	{
 		throw std::runtime_error("Failed to open image");
-	}
-
-	std::ifstream test(originalImgName);
-	test.seekg(0, test.end);
-	auto sz = test.tellg();
-
-	if (sz != bytes.size())
-	{
-		std::cout << "QQ:" << sz << " != " << bytes.size() << std::endl;
-	}
-	
-	int i = 0;
-	for (char c : bytes)
-	{
-		test.seekg(i);
-		char h = ' ';
-		test.read(&h, 1);
-
-		if (h != c)
-		{
-			std::cout << "oops, " << i << ": " << int(h) << " != " << int(c) << std::endl;
-			std::cout << "img size: " << bytes.size() << std::endl;
-			exit(1);
-		}
-		i++;
 	}
 
 	return bytes;
@@ -153,33 +94,79 @@ void Steganographizer::writeBytes(
 	}
 }
 
-void Steganographizer::enstegrifyImage(
-	const std::string &carrierImg,
-	const std::vector<char> &originalBytes,
+const std::vector<char> Steganographizer::equipWithPayload(
+ 	const std::vector<char> &originalBytes,
 	const std::string payload)
 {
 	std::vector<char> modifiedBytes = originalBytes;
-	std::vector<char> payloadMask = expand(payload);
+	std::vector<char> payloadMask   = expand(payload);
 
-	if (modifiedBytes.size() < originalBytes.size())
+	unsigned short throwOut = 0;
+
+	if (originalBytes.size() < 2)
 	{
-
+		throw std::runtime_error("Input image too small, check file.");
 	}
 
-	for (int i = 0; i < modifiedBytes.size(); i++)
+	switch(getImgType(originalBytes.at(0) << 8 | originalBytes.at(1)))
+	{
+	case ImgType::MSFT_BMP_V1:
+		throwOut = 10;
+		std::cout << "type 1 detected\n";
+		break;
+
+	case ImgType::MSFT_BMP_V2:
+		throwOut = 14;
+		std::cout << "type 2 detected\n";
+		break;
+
+	case ImgType::MSFT_BMP_V3_V4:
+		std::cout << "type 3 or 4 detected\n";
+		throwOut = (originalBytes.at(1) << 8) | originalBytes.at(0);
+		break;
+
+	default:
+		throw std::runtime_error("Non-microsoft BMP input, aborting.");
+		break;
+	}
+
+	/*for (int i = 0; i < modifiedBytes.size(); i++)
 	{
 
+	}*/
+
+	return modifiedBytes;
+}
+
+ImgType Steganographizer::getImgType(const unsigned short firstWord)
+{
+	auto type = ImgType::NOT_VALID;
+
+	if (firstWord & TYPE_1_BMP_MASK)
+	{
+		type = ImgType::MSFT_BMP_V1;
+	} 
+	else if (firstWord & TYPE_2_BMP_MASK)
+	{
+		type = ImgType::MSFT_BMP_V2;
 	}
+	else
+	{
+		type = ImgType::MSFT_BMP_V3_V4;
+	}
+
+	return type;
 }
 
 std::vector<char> Steganographizer::expand(const std::string &payload)
 {
-
+	std::vector<char> expansion(payload.begin(), payload.end());
+	return expansion;
 }
 
 void Steganographizer::getFileData(
-	const std::string &ioFile, 
-	std::string &input)
+	std::string &input,
+	const std::string &ioFile)
 {
 	std::ifstream inFile(ioFile);
 

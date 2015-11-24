@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 	std::string modImg = "";
 	std::string ioFileName = "";
 
-	Steganographizer steg;// = new Steganographizer();
+	Steganographizer steg;
 
 	for (int i = 0; i < args.size(); i++)
 	{
@@ -43,8 +43,6 @@ int main(int argc, char* argv[])
 				{
 					modImg += ".bmp";
 				}
-				std::cout << "input image: " << orgImg << std::endl;
-				std::cout << "outpt image: " << modImg << std::endl;
 			}
 			else
 			{
@@ -57,11 +55,11 @@ int main(int argc, char* argv[])
 				if ((i + 3) < args.size())
 				{
 					ioFileName = args.at(i + 3);
-					steg.ensteginate(orgImg, modImg, ioFileName);
+					steg.encrypt(orgImg, modImg, ioFileName);
 				}
 				else
 				{
-					steg.ensteginate(orgImg, modImg);
+					steg.encrypt(orgImg, modImg);
 				}
 			}
 			catch (std::runtime_error &err)
@@ -80,7 +78,6 @@ int main(int argc, char* argv[])
 				{
 					modImg += ".bmp";
 				}
-				std::cout << "outpt image: " << modImg << std::endl;
 			}
 			else
 			{
