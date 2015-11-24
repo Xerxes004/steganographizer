@@ -101,11 +101,7 @@ const std::vector<char> Steganographizer::equipWithPayload(
 	std::vector<char> modifiedBytes = originalBytes;
 	std::vector<char> payloadMask   = expand(payload);
 
-
-
 	int throwOut = getBytesToThrowOut(originalBytes);
-
-	
 
 	/*for (int i = 0; i < modifiedBytes.size(); i++)
 	{
@@ -135,6 +131,8 @@ ImgType Steganographizer::getImgType(const int dWord)
 	return type;
 }
 
+// analyzes the bytes of the file to see what kind of BMP it is, then throws
+// out the appropriate number of header bits
 int Steganographizer::getBytesToThrowOut(const std::vector<char> &originalBytes)
 {
 	int throwOut = 0;
@@ -163,7 +161,7 @@ int Steganographizer::getBytesToThrowOut(const std::vector<char> &originalBytes)
 
 	case ImgType::MSFT_BMP_V3_V4:
 		std::cout << "type 3 or 4 detected\n";
-		throwOut = (originalBytes.at(1) << 8) | originalBytes.at(0);
+		throwOut = dWord;
 		break;
 
 	default:
