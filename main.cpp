@@ -67,7 +67,6 @@ int main(int argc, char* argv[])
 			catch (std::runtime_error &err)
 			{
 				std::cout << err.what() << std::endl;
-				showHelp();
 			}
 		}
 		if (args.at(i).compare("-d") == 0)
@@ -102,7 +101,6 @@ int main(int argc, char* argv[])
 			catch (std::runtime_error &err)
 			{
 				std::cout << err.what() << std::endl;
-				showHelp();
 			}
 		}
 		if (args.at(i).compare("-h") == 0)

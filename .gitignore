@@ -1,1 +1,5 @@
-*.[oea]
+*.bmp
+*.[oa]
+steg.e
+*.txt
+*.jpg

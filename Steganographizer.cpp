@@ -16,20 +16,21 @@ void Steganographizer::encrypt(
 	}
 	else
 	{
-		payload = getFileString(ioFile);
+		auto payloadBytes = readBytes(ioFile);
+		payload = std::string(payloadBytes.begin(), payloadBytes.end());
+		payload += '\0';
 	}
 
-	std::cout << "encrypting...\n";
+	std::cout << "encrypting... ";
 
-	auto start = std::chrono::system_clock::now();
-	
+	auto start = TimeUtil::now();
+
+	//std::vector<char> originalBytes(originalData.c_str(), originalData.c_str() + originalData.size()); //readBytes(originalFile);
 	std::vector<char> originalBytes = readBytes(originalFile);
 	std::vector<char> courierBytes  = equipWithPayload(originalBytes, payload);
 	writeBytes(courierBytes, courierFile);
 
-	auto delta = std::chrono::system_clock::now() - start;
-	auto seconds = 
-		std::chrono::duration_cast<std::chrono::milliseconds>(delta).count() / 1000.0;
+	auto seconds = TimeUtil::timeFrom(start);
 
 	std::cout << "done in " << std::setprecision(2) << std::fixed 
 	          << seconds << " seconds.\n";
@@ -44,7 +45,7 @@ const std::vector<char> Steganographizer::equipWithPayload(
 
 	int throwOut = getBytesToThrowOut(originalBytes);
 
-	if (modifiedBytes.size() - throwOut < (payload.size() * sizeof(char)))
+	if (modifiedBytes.size() - throwOut < payloadExpand.size())
 	{
 		throw std::runtime_error("Image is not big enough to hold this data!");
 	}
@@ -82,48 +83,14 @@ std::vector<char> Steganographizer::readBytes(const std::string &fileName)
 	if (input.is_open() && !input.fail())
 	{
 		input.seekg(0, input.end);
-		auto filesz = input.tellg();
-
-		bytes.resize(filesz);
-
-		// makes a thread for each 512kb chunk of image
-		const int chunksz = 524288;
-		const int chunks = filesz / chunksz + ((chunksz % filesz == 0) ? 0 : 1);
-		
-		std::vector<std::thread> workerPool;
-		workerPool.resize(chunks);
-
-		auto processChunk = [&](int beg, int max)->void
-		{
-			std::ifstream chunkFile(fileName);
-
-			if (!chunkFile.fail() && chunkFile.is_open())
-			{
-				while (beg < max)
-				{
-					chunkFile.seekg(beg);
-					chunkFile.read(&bytes.at(beg++), 1);
-				}
-			}
-		};
-
-		int maxIndex = filesz;
-
-		for (int i = 0; i < workerPool.size(); i++)
-		{
-			int beg = i * chunksz * sizeof(char);
-			int max = (beg + chunksz) < maxIndex ? beg + chunksz : bytes.size() - 1;
-			workerPool.at(i) = std::thread(processChunk, beg, max);
-		}
-
-		for (int i = 0; i < workerPool.size(); i++)
-		{
-			workerPool.at(i).join();
-		}
+		auto fileSize = input.tellg();
+		bytes.resize(fileSize);
+		input.seekg(0);
+		input.read(&bytes.front(), bytes.size());
 	}
 	else
 	{
-		throw std::runtime_error("Failed to open image");
+		throw std::runtime_error("Failed to open file " + fileName);
 	}
 
 	return bytes;
@@ -147,15 +114,12 @@ int Steganographizer::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 {
 	int throwOut = 0;
 
-	if (bitmapBytes.size() < 4)
+	if (bitmapBytes.size() < 2)
 	{
 		throw std::runtime_error("Input image too small, check file.");
 	}
 
-	int dWord = bitmapBytes.at(0) << 23 | 
-			    bitmapBytes.at(1) << 15 |
-			    bitmapBytes.at(2) << 7  |
-			    bitmapBytes.at(3);
+	const unsigned short dWord = bitmapBytes.at(1) << 8  | bitmapBytes.at(0);
 
 	switch(getImgType(dWord))
 	{
@@ -171,6 +135,7 @@ int Steganographizer::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 		throwOut = dWord;
 		break;
 
+	case ImgType::NOT_VALID:
 	default:
 		throw std::runtime_error("Non-microsoft BMP input, aborting.");
 		break;
@@ -180,15 +145,15 @@ int Steganographizer::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 }
 
 // selects the proper enum type based on the dword of the BMP
-ImgType Steganographizer::getImgType(const int dWord)
+ImgType Steganographizer::getImgType(const unsigned short dWord)
 {
 	auto type = ImgType::NOT_VALID;
 
-	if (dWord & (TYPE_1_BMP_MASK << 15))
+	if (dWord == TYPE_1_BMP_MASK)
 	{
 		type = ImgType::MSFT_BMP_V1;
 	} 
-	else if (dWord & (TYPE_2_BMP_MASK << 15))
+	else if (dWord == TYPE_2_BMP_MASK)
 	{
 		type = ImgType::MSFT_BMP_V2;
 	}
@@ -217,7 +182,7 @@ const std::vector<char> Steganographizer::extractPayload(
 
 		payloadBytes.push_back(c);
 
-		if (c == '\0')
+		if (payloadBytes.back() == '\0')
 		{
 			break;
 		}
@@ -226,11 +191,9 @@ const std::vector<char> Steganographizer::extractPayload(
 	return payloadBytes;
 }
 
-// returns the bit at the specified position. The leftmost bit is bit 0 due to
-// little-endian style
 const int Steganographizer::getBit(const char &byte, int position)
 {
-	char mask = 1 << (7 - position);
+	char mask = 1 << position;
 	return (byte & mask) == 0 ? 0 : 1;
 }
 
@@ -238,11 +201,11 @@ void Steganographizer::setBit(char &byte, int position, unsigned int value)
 {
 	if (value == 0)
 	{
-		byte &= ~(1 << (7 - position));
+		byte &= ~(1 << position);
 	}
 	else
 	{
-		byte |= (1 << (7 - position));
+		byte |= (1 << position);
 	}
 }
 
@@ -261,7 +224,7 @@ std::string Steganographizer::getFileString(const std::string &ioFile)
 
 	if (inFile.is_open())
 	{
-		ss << inFile.rdbuf();
+		ss << inFile.rdbuf() << '\0';
 		inFile.close();
 	}
 	else
@@ -276,10 +239,10 @@ void Steganographizer::decrypt(
 	const std::string &modifiedImg, 
 	const std::string ioFile)
 {
-	std::cout << "decrypting... this may take a few seconds\n";
+	std::cout << "decrypting...\n";
 
 	std::vector<char> modifiedBytes = readBytes(modifiedImg);
-	std::vector<char> payloadBytes  = extractPayload(modifiedBytes);
+	std::vector<char> payloadBytes = extractPayload(modifiedBytes);
 	std::string payload(payloadBytes.begin(), payloadBytes.end());
 
 	if (ioFile == "")
@@ -292,7 +255,7 @@ void Steganographizer::decrypt(
 		
 		if (output.is_open() && !output.fail())
 		{
-			output.write(payload.c_str(), payload.length() - 1);
+			output.write(payload.c_str(), payload.length()g);
 		}
 		else
 		{
