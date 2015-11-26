@@ -6,12 +6,10 @@
 #include <iomanip>
 #include <vector>
 #include <thread>
-#include <mutex>
 #include <fstream>
 #include <sstream>
 
 #include <chrono>
-
 
 enum class ImgType
 {
@@ -24,20 +22,20 @@ enum class ImgType
 class Steganographizer
 {
 public:
-	Steganographizer();
-	
 	void encrypt(
-		const std::string &original, 
-	   	const std::string &courier, 
+		const std::string &originalFile, 
+	   	const std::string &courierFile, 
 	   	const std::string ioFile = "");
 
-	const bool decrypt(std::string modImg, std::string ioFile = "");
+	void decrypt(const std::string &modifiedImg, const std::string ioFile = "");
 
 private:
-	const int TYPE_1_BMP_MASK = 0x0;
+	const int TYPE_1_BMP_MASK = 0;
 	const int TYPE_2_BMP_MASK = ('M' << 8) | 'B'; // little endian
 
-	void getFileData(std::string &input, const std::string &ioFile);
+	std::mutex m;
+
+	std::string getFileString(const std::string &ioFile);
 	
 	std::vector<char> readBytes(const std::string &fileName);
 
@@ -49,10 +47,17 @@ private:
 	 	const std::vector<char> &originalBytes,
 		const std::string payload);
 
-	std::vector<char> expand(const std::string &payload);
+	std::vector<char> expandPayload(const std::string &payload);
 	
 	int getBytesToThrowOut(const std::vector<char> &originalBytes);
 	ImgType getImgType(const int dWord);
+
+	const std::vector<char> extractPayload(const std::vector<char> &payloadBytes);
+
+	const int getBit(const char &byte, int position);
+	void setBit(char &byte, int position, unsigned int value);
+
+	void printByteAsBinary(const char &byte);
 };
 
 #endif

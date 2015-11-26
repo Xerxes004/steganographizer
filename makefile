@@ -3,7 +3,7 @@ CC=g++ -std=c++11 -stdlib=libc++
 
 all: steg.e
 
-steg.e: Steganographizer.o main.o
+steg.e: Steganographizer.o main.o Steganographizer.h
 	$(CC) Steganographizer.o main.o -o steg.e
 
 main.o: main.cpp
@@ -13,4 +13,4 @@ Steganographizer.o: Steganographizer.cpp Steganographizer.h
 	$(CC) -c Steganographizer.cpp
 
 clean:
-	rm *o steg.e testoutput.bmp
+	rm *o steg.e output.bmp

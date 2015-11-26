@@ -1,5 +1,7 @@
 #include <iostream>
+#include <iomanip>
 #include <vector>
+#include <chrono>
 
 #include "Steganographizer.h"
 

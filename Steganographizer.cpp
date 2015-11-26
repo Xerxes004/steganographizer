@@ -1,29 +1,76 @@
 #include "Steganographizer.h"
 
-Steganographizer::Steganographizer(){}
-
 void Steganographizer::encrypt(
-	const std::string &original, 
-   	const std::string &courier, 
+	const std::string &originalFile, 
+   	const std::string &courierFile, 
    	const std::string ioFile)
 {
-	std::string payload = "";
+	std::string payload;
 
 	if (ioFile.compare("") == 0)
 	{
 		std::cout << "Input: ";
-		std::cin >> payload;
+		std::getline(std::cin, payload);
+		// getline does not input a null character, so we have to add one
+		payload += '\0';
 	}
 	else
 	{
-		getFileData(payload, ioFile);
+		payload = getFileString(ioFile);
 	}
 
-	std::cout << "reading original image... this may take a few seconds\n";
-	std::vector<char> originalBytes = readBytes(original);
-	std::vector<char> courierBytes  = equipWithPayload(originalBytes, payload);
+	std::cout << "encrypting...\n";
 
-	writeBytes(courierBytes, courier);
+	auto start = std::chrono::system_clock::now();
+	
+	std::vector<char> originalBytes = readBytes(originalFile);
+	std::vector<char> courierBytes  = equipWithPayload(originalBytes, payload);
+	writeBytes(courierBytes, courierFile);
+
+	auto delta = std::chrono::system_clock::now() - start;
+	auto seconds = 
+		std::chrono::duration_cast<std::chrono::milliseconds>(delta).count() / 1000.0;
+
+	std::cout << "done in " << std::setprecision(2) << std::fixed 
+	          << seconds << " seconds.\n";
+}
+
+const std::vector<char> Steganographizer::equipWithPayload(
+ 	const std::vector<char> &originalBytes,
+	const std::string payload)
+{
+	std::vector<char> modifiedBytes(originalBytes);
+	std::vector<char> payloadExpand = expandPayload(payload);
+
+	int throwOut = getBytesToThrowOut(originalBytes);
+
+	if (modifiedBytes.size() - throwOut < (payload.size() * sizeof(char)))
+	{
+		throw std::runtime_error("Image is not big enough to hold this data!");
+	}
+	
+	int i = throwOut;
+	for (char byte : payloadExpand)
+	{
+		setBit(modifiedBytes.at(i++), 0, int(byte));
+	}
+	return modifiedBytes;
+}
+
+std::vector<char> Steganographizer::expandPayload(const std::string &payload)
+{
+	std::vector<char> payloadBytes(payload.begin(), payload.end());
+	std::vector<char> expansion;
+
+	for (char bytes : payloadBytes)
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			expansion.push_back(getBit(bytes, i));
+		}
+	}
+
+	return expansion;
 }
 
 std::vector<char> Steganographizer::readBytes(const std::string &fileName)
@@ -65,7 +112,7 @@ std::vector<char> Steganographizer::readBytes(const std::string &fileName)
 		for (int i = 0; i < workerPool.size(); i++)
 		{
 			int beg = i * chunksz * sizeof(char);
-			int max = (beg + chunksz) < maxIndex ? beg + chunksz : bytes.size();
+			int max = (beg + chunksz) < maxIndex ? beg + chunksz : bytes.size() - 1;
 			workerPool.at(i) = std::thread(processChunk, beg, max);
 		}
 
@@ -94,73 +141,33 @@ void Steganographizer::writeBytes(
 	}
 }
 
-const std::vector<char> Steganographizer::equipWithPayload(
- 	const std::vector<char> &originalBytes,
-	const std::string payload)
-{
-	std::vector<char> modifiedBytes = originalBytes;
-	std::vector<char> payloadMask   = expand(payload);
-
-	int throwOut = getBytesToThrowOut(originalBytes);
-
-	/*for (int i = 0; i < modifiedBytes.size(); i++)
-	{
-
-	}*/
-
-	return modifiedBytes;
-}
-
-ImgType Steganographizer::getImgType(const int dWord)
-{
-	auto type = ImgType::NOT_VALID;
-
-	if (dWord & (TYPE_1_BMP_MASK << 16))
-	{
-		type = ImgType::MSFT_BMP_V1;
-	} 
-	else if (dWord & (TYPE_2_BMP_MASK << 16))
-	{
-		type = ImgType::MSFT_BMP_V2;
-	}
-	else
-	{
-		type = ImgType::MSFT_BMP_V3_V4;
-	}
-
-	return type;
-}
-
 // analyzes the bytes of the file to see what kind of BMP it is, then throws
 // out the appropriate number of header bits
-int Steganographizer::getBytesToThrowOut(const std::vector<char> &originalBytes)
+int Steganographizer::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 {
 	int throwOut = 0;
 
-	if (originalBytes.size() < 4)
+	if (bitmapBytes.size() < 4)
 	{
 		throw std::runtime_error("Input image too small, check file.");
 	}
 
-	int dWord = originalBytes.at(0) << 24 
-			  | originalBytes.at(1) << 16
-			  | originalBytes.at(2) << 8
-			  | originalBytes.at(3);
+	int dWord = bitmapBytes.at(0) << 23 | 
+			    bitmapBytes.at(1) << 15 |
+			    bitmapBytes.at(2) << 7  |
+			    bitmapBytes.at(3);
 
 	switch(getImgType(dWord))
 	{
 	case ImgType::MSFT_BMP_V1:
 		throwOut = 10;
-		std::cout << "type 1 detected\n";
 		break;
 
 	case ImgType::MSFT_BMP_V2:
-		throwOut = 14;
-		std::cout << "type 2 detected\n";
+		throwOut = 14 + int(bitmapBytes.at(14));
 		break;
 
 	case ImgType::MSFT_BMP_V3_V4:
-		std::cout << "type 3 or 4 detected\n";
 		throwOut = dWord;
 		break;
 
@@ -172,38 +179,126 @@ int Steganographizer::getBytesToThrowOut(const std::vector<char> &originalBytes)
 	return throwOut;
 }
 
-std::vector<char> Steganographizer::expand(const std::string &payload)
+// selects the proper enum type based on the dword of the BMP
+ImgType Steganographizer::getImgType(const int dWord)
 {
-	std::vector<char> expansion(payload.begin(), payload.end());
-	return expansion;
+	auto type = ImgType::NOT_VALID;
+
+	if (dWord & (TYPE_1_BMP_MASK << 15))
+	{
+		type = ImgType::MSFT_BMP_V1;
+	} 
+	else if (dWord & (TYPE_2_BMP_MASK << 15))
+	{
+		type = ImgType::MSFT_BMP_V2;
+	}
+	else
+	{
+		type = ImgType::MSFT_BMP_V3_V4;
+	}
+
+	return type;
 }
 
-void Steganographizer::getFileData(
-	std::string &input,
-	const std::string &ioFile)
+const std::vector<char> Steganographizer::extractPayload(
+	const std::vector<char> &modifiedBytes)
+{
+	auto dataStart = getBytesToThrowOut(modifiedBytes);
+	std::vector<char> payloadBytes;
+
+	for (int i = dataStart; i < modifiedBytes.size(); i += 8)
+	{
+		char c = char(0);
+
+		for (int j = 0; j < 8; j++)
+		{
+			setBit(c, j, getBit(modifiedBytes.at(i + j), 0));
+		}
+
+		payloadBytes.push_back(c);
+
+		if (c == '\0')
+		{
+			break;
+		}
+	}
+
+	return payloadBytes;
+}
+
+// returns the bit at the specified position. The leftmost bit is bit 0 due to
+// little-endian style
+const int Steganographizer::getBit(const char &byte, int position)
+{
+	char mask = 1 << (7 - position);
+	return (byte & mask) == 0 ? 0 : 1;
+}
+
+void Steganographizer::setBit(char &byte, int position, unsigned int value)
+{
+	if (value == 0)
+	{
+		byte &= ~(1 << (7 - position));
+	}
+	else
+	{
+		byte |= (1 << (7 - position));
+	}
+}
+
+void Steganographizer::printByteAsBinary(const char &byte)
+{
+	for (int i = 0; i < 8; i++)
+	{
+		std::cout << getBit(byte, i);
+	}
+}
+
+std::string Steganographizer::getFileString(const std::string &ioFile)
 {
 	std::ifstream inFile(ioFile);
+	std::stringstream ss;
 
 	if (inFile.is_open())
 	{
-		std::stringstream ss;
 		ss << inFile.rdbuf();
-		input = ss.str();
 		inFile.close();
 	}
 	else
 	{
 		throw std::runtime_error("Error opening input file");
 	}
-	std::cout << "Input File data: " << std::endl;
-	std::cout << input << std::endl;
+
+	return ss.str();
 }
 
-const bool Steganographizer::decrypt(
-	std::string modifiedImg, 
-	std::string ioFile)
+void Steganographizer::decrypt(
+	const std::string &modifiedImg, 
+	const std::string ioFile)
 {
-	return false;
+	std::cout << "decrypting... this may take a few seconds\n";
+
+	std::vector<char> modifiedBytes = readBytes(modifiedImg);
+	std::vector<char> payloadBytes  = extractPayload(modifiedBytes);
+	std::string payload(payloadBytes.begin(), payloadBytes.end());
+
+	if (ioFile == "")
+	{
+		std::cout << "Secret message:\n" << payload << std::endl;
+	}
+	else
+	{
+		std::ofstream output(ioFile);
+		
+		if (output.is_open() && !output.fail())
+		{
+			output.write(payload.c_str(), payload.length() - 1);
+		}
+		else
+		{
+			throw std::runtime_error("Output file failed to open!");
+		}
+	}
 }
 
 
