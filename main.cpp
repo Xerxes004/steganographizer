@@ -3,7 +3,7 @@
 #include <vector>
 #include <chrono>
 
-#include "Steganographizer.h"
+#include "Steg.h"
 
 void showHelpAndExitWithCode(const int code);
 void encrypt(const std::vector<std::string> &args, const int index);
@@ -59,7 +59,7 @@ void encrypt(const std::vector<std::string> &args, const int index)
 	std::string modImg = "";
 	std::string ioFileName = "";
 
-	Steganographizer steg;
+	Steg steg;
 
 	if ((index + 2) < args.size())
 	{
@@ -68,23 +68,22 @@ void encrypt(const std::vector<std::string> &args, const int index)
 
 		if (orgImg.substr(orgImg.size() - 4, 4).compare(".bmp") != 0)
 		{
-			orgImg += ".bmp";
+			throw std::runtime_error("Argument is not a .bmp");
 		}
-		if (modImg.substr(modImg.size() - 4, 4).compare(".bmp") != 0)
+		else if (modImg.substr(modImg.size() - 4, 4).compare(".bmp") != 0)
 		{
-			modImg += ".bmp";
+			throw std::runtime_error("Argument is not a .bmp");
 		}
 	}
 	else
 	{
-		std::cout << "error: not enough arguments\n";
+		std::cout << "error: not enough arguments" << std::endl;
 		showHelpAndExitWithCode(1);
 	}
 
 	if ((index + 3) < args.size())
 	{
-		ioFileName = args.at(index + 3);
-		steg.encrypt(orgImg, modImg, ioFileName);
+		steg.encrypt(orgImg, modImg, args.at(index + 3));
 	}
 	else
 	{
@@ -94,11 +93,10 @@ void encrypt(const std::vector<std::string> &args, const int index)
 
 void decrypt(const std::vector<std::string> &args, const int index)
 {
-	std::string orgImg = "";
 	std::string modImg = "";
 	std::string ioFileName = "";
 
-	Steganographizer steg;
+	Steg steg;
 
 	if ((index + 1) < args.size())
 	{
@@ -106,19 +104,18 @@ void decrypt(const std::vector<std::string> &args, const int index)
 
 		if (modImg.substr(modImg.size() - 4, 4).compare(".bmp") != 0)
 		{
-			modImg += ".bmp";
+			throw std::runtime_error("Argument is not a .bmp");
 		}
 	}
 	else
 	{
-		std::cout << "error: not enough arguments\n";
+		std::cout << "error: not enough arguments" << std::endl;
 		showHelpAndExitWithCode(1);
 	}
 
 	if ((index + 2) < args.size())
 	{
-		ioFileName = args.at(index + 2);
-		steg.decrypt(modImg, ioFileName);
+		steg.decrypt(modImg, args.at(index + 2));
 	}
 	else
 	{
@@ -130,7 +127,7 @@ void analyze(const std::vector<std::string> &args, const int index)
 {
 	std::string imageName = "";
 
-	Steganographizer steg;
+	Steg steg;
 
 	if ((index + 1) < args.size())
 	{
@@ -138,12 +135,12 @@ void analyze(const std::vector<std::string> &args, const int index)
 
 		if (imageName.substr(imageName.size() - 4, 4).compare(".bmp") != 0)
 		{
-			imageName += ".bmp";
+			throw std::runtime_error("Argument is not a .bmp");
 		}
 	}
 	else
 	{
-		std::cout << "error: not enough arguments\n";
+		std::cout << "error: not enough arguments" << std::endl;
 		showHelpAndExitWithCode(1);
 	}
 
@@ -152,11 +149,21 @@ void analyze(const std::vector<std::string> &args, const int index)
 
 void showHelpAndExitWithCode(const int code)
 {
-	std::cout << "options:\n    ";
-	std::cout << "-e <original image> <modified image> [optional input file]";
-	std::cout << "\n    ";
-	std::cout << "-d <modified image> [optional output file]";
-	std::cout << "\n    ";
-	std::cout << "-h show this help\n";
+	std::cout << "options:" << std::endl;
+
+	std::cout << "\tEncrypt the given image with a message from the command \n"
+		      << "\tline, or from the optional input file.\n"
+	  		  << "\t-e <original image> <modified image> [optional input file]"
+			  << std::endl;
+
+	std::cout << "\n\tDecrypt the given image. The message is written to the "
+			  << "\n\tconsole, or stored in the optional output file."
+			  << "\n\t-d <modified image> [optional output file]\n";
+
+	std::cout << "\n\tAnalyze the given bmp file\n"
+		      << "\t-a <image.bmp>";
+
+	std::cout << "\n\n\t-h show this help\n\n";
+
 	exit(code);
 }

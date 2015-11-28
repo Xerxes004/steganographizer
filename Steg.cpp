@@ -1,6 +1,6 @@
-#include "Steganographizer.h"
+#include "Steg.h"
 
-void Steganographizer::encrypt(
+void Steg::encrypt(
 	const std::string &originalFile, 
    	const std::string &courierFile, 
    	const std::string ioFile)
@@ -11,7 +11,7 @@ void Steganographizer::encrypt(
 	{
 		std::cout << "Input: ";
 		std::getline(std::cin, payload);
-		
+
 		// getline does not input a null character, so we have to add one
 		payload += '\0';
 	}
@@ -27,7 +27,7 @@ void Steganographizer::encrypt(
 	writeBytes(courierBytes, courierFile);
 }
 
-const std::vector<char> Steganographizer::equipWithPayload(
+const std::vector<char> Steg::equipWithPayload(
  	const std::vector<char> &originalBytes,
 	const std::string payload)
 {
@@ -49,7 +49,7 @@ const std::vector<char> Steganographizer::equipWithPayload(
 	return modifiedBytes;
 }
 
-std::vector<char> Steganographizer::expandPayload(const std::string &payload)
+std::vector<char> Steg::expandPayload(const std::string &payload)
 {
 	std::vector<char> payloadBytes(payload.begin(), payload.end());
 	std::vector<char> expansion;
@@ -65,7 +65,7 @@ std::vector<char> Steganographizer::expandPayload(const std::string &payload)
 	return expansion;
 }
 
-std::vector<char> Steganographizer::readBytes(const std::string &fileName)
+std::vector<char> Steg::readBytes(const std::string &fileName)
 {
 	std::ifstream input(fileName);
 	
@@ -87,7 +87,7 @@ std::vector<char> Steganographizer::readBytes(const std::string &fileName)
 	return bytes;
 }
 
-void Steganographizer::writeBytes(
+void Steg::writeBytes(
 	const std::vector<char> &bytes,
 	const std::string &fileName)
 {
@@ -101,7 +101,7 @@ void Steganographizer::writeBytes(
 
 // analyzes the bytes of the file to see what kind of BMP it is, then throws
 // out the appropriate number of header bits
-int Steganographizer::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
+int Steg::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 {
 	int throwOut = 0;
 
@@ -135,7 +135,7 @@ int Steganographizer::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 }
 
 // selects the proper enum type based on the dword of the BMP
-const unsigned short Steganographizer::getImgType(const unsigned short dWord)
+const unsigned short Steg::getImgType(const unsigned short dWord)
 {
 	unsigned short type = 0;
 
@@ -155,7 +155,7 @@ const unsigned short Steganographizer::getImgType(const unsigned short dWord)
 	return type;
 }
 
-const std::vector<char> Steganographizer::extractPayload(
+const std::vector<char> Steg::extractPayload(
 	const std::vector<char> &modifiedBytes)
 {
 	auto dataStart = getBytesToThrowOut(modifiedBytes);
@@ -167,10 +167,22 @@ const std::vector<char> Steganographizer::extractPayload(
 
 		for (int j = 0; j < 8; j++)
 		{
+			// set the j'th bit in c equal to the lowest-order bit at i + j of
+			// the modified bytes. This effectively looks at the next 8 bytes, 
+			// and reconstructs a character from their lowest-order bits.
 			setBit(c, j, getBit(modifiedBytes.at(i + j), 0));
 		}
+		if (int(c) <= 127 && int(c) >= 0)
+		{
+			payloadBytes.push_back(c);
+		}
+		else
+		{
+			std::string msg = "Input image is not encrypted!\n";
+			msg += "A non-alphabetical ASCII character was found.";
 
-		payloadBytes.push_back(c);
+			throw std::runtime_error(msg.c_str());
+		}
 
 		if (payloadBytes.back() == '\0')
 		{
@@ -181,13 +193,13 @@ const std::vector<char> Steganographizer::extractPayload(
 	return payloadBytes;
 }
 
-int Steganographizer::getBit(const char &byte, const short position)
+int Steg::getBit(const char &byte, const short position)
 {
 	char mask = 1 << position;
 	return (byte & mask) == 0 ? 0 : 1;
 }
 
-void Steganographizer::setBit(char &byte, const unsigned short position, 
+void Steg::setBit(char &byte, const unsigned short position, 
     	const unsigned short value)
 {
 	if (value == 0)
@@ -200,29 +212,20 @@ void Steganographizer::setBit(char &byte, const unsigned short position,
 	}
 }
 
-void Steganographizer::printByteAsBinary(const char &byte)
-{
-	for (int i = 0; i < 8; i++)
-	{
-		std::cout << getBit(byte, i);
-	}
-}
-
-void Steganographizer::decrypt(
-	const std::string &modifiedImg, 
+void Steg::decrypt(
+	const std::string &courier, 
 	const std::string ioFile)
 {
-	std::vector<char> modifiedBytes = readBytes(modifiedImg);
+	std::vector<char> modifiedBytes = readBytes(courier);
 	std::vector<char> payloadBytes  = extractPayload(modifiedBytes);
 	std::string payload(payloadBytes.begin(), payloadBytes.end());
 
 	if (ioFile == "")
 	{
-		std::cout << "Secret message:\n" << payload << std::endl;
+		std::cout << "Secret message:" << std::endl << payload << std::endl;
 	}
 	else
 	{
-		std::cout << "wut\n";
 		std::ofstream output(ioFile);
 		
 		if (output.is_open() && !output.fail())
@@ -236,7 +239,7 @@ void Steganographizer::decrypt(
 	}
 }
 
-void Steganographizer::analyze(const std::string &image)
+void Steg::analyze(const std::string &image)
 {
 	auto bytes = readBytes(image);
 	auto imageType = getImgType((bytes.at(0) << 8) | bytes.at(1));
@@ -247,8 +250,8 @@ void Steganographizer::analyze(const std::string &image)
 	std::cout << tab << "Length     : " << bytes.size() << " bytes\n";
 	std::cout << tab << "BMP type   : " << imageType << std::endl;
 	std::cout << tab << "Max payload: " 
-	          << (bytes.size() - getBytesToThrowOut(bytes)) / 8 
-	          << " characters";
+	          << ((bytes.size() - getBytesToThrowOut(bytes)) / 8) - 1
+	          << " characters\n";
 
 }
 

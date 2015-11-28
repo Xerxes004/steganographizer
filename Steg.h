@@ -8,7 +8,7 @@
 #include <vector>
 #include <fstream>
 
-class Steganographizer
+class Steg
 {
 public:
 	void encrypt(const std::string &originalImg, const std::string &courier, 
@@ -42,8 +42,6 @@ private:
 	int getBit(const char &byte, const short position);
     void setBit(char &byte, const unsigned short position, 
     	const unsigned short value);
-
-    void printByteAsBinary(const char &byte);
 };
 
 #endif
