@@ -19,11 +19,6 @@ int main(int argc, char* argv[])
 	// modernize the arguments, because passing arrays is a nightmare
 	std::vector<std::string> args(argv, argv + argc);
 
-	for (int i = 0; i < argc; i++)
-	{
-		args.push_back(std::string(argv[i]));
-	}
-
 	for (int i = 0; i < args.size(); i++)
 	{
 		if (args.at(i).compare("-e") == 0)
@@ -36,6 +31,11 @@ int main(int argc, char* argv[])
 		{
 			decrypt(args, i);
 			break;
+		}
+
+		if (args.at(i).compare("-a") == 0)
+		{
+			//analyze(args, i);
 		}
 
 		if (args.at(i).compare("-h") == 0)

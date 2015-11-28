@@ -10,6 +10,7 @@
 
 #include "TimeUtil.h"
 
+// enum used to select between BMP types
 enum class ImgType
 {
 	MSFT_BMP_V1, 
@@ -21,10 +22,12 @@ enum class ImgType
 class Steganographizer
 {
 public:
-	void encrypt(const std::string &originalFile, 
-		const std::string &courierFile, const std::string ioFile = "");
+	void encrypt(const std::string &originalImg, const std::string &courier, 
+		const std::string ioFile = "");
 
-	void decrypt(const std::string &modifiedImg, const std::string ioFile = "");
+	void decrypt(const std::string &courierImg, const std::string ioFile = "");
+
+	void analyze(const std::string &image);
 
 private:
 	const unsigned short TYPE_1_BMP = 0;
@@ -47,8 +50,7 @@ private:
 	const std::vector<char> extractPayload(
 		const std::vector<char> &payloadBytes);
 
-	const int getBit(const char &byte, const short position);
-
+	int getBit(const char &byte, const short position);
     void setBit(char &byte, const unsigned short position, 
     	const unsigned short value);
 

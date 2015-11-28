@@ -190,7 +190,7 @@ const std::vector<char> Steganographizer::extractPayload(
 	return payloadBytes;
 }
 
-const int Steganographizer::getBit(const char &byte, const short position)
+int Steganographizer::getBit(const char &byte, const short position)
 {
 	char mask = 1 << position;
 	return (byte & mask) == 0 ? 0 : 1;
@@ -223,6 +223,8 @@ void Steganographizer::decrypt(
 {
 	std::cout << "decrypting... ";
 
+	auto start = TimeUtil::now();
+
 	std::vector<char> modifiedBytes = readBytes(modifiedImg);
 	std::vector<char> payloadBytes  = extractPayload(modifiedBytes);
 	std::string payload(payloadBytes.begin(), payloadBytes.end());
@@ -233,6 +235,7 @@ void Steganographizer::decrypt(
 	}
 	else
 	{
+		std::cout << "wut\n";
 		std::ofstream output(ioFile);
 		
 		if (output.is_open() && !output.fail())
@@ -244,9 +247,25 @@ void Steganographizer::decrypt(
 			throw std::runtime_error("Output file failed to open, aborting.");
 		}
 	}
+
+	auto seconds = TimeUtil::timeFrom(start);
+
+	std::cout << "done in " << seconds << " seconds.\n";
 }
 
+void Steganographizer::analyze(const std::string &image)
+{
+	std::ifstream analyze(image);
 
+	if (analyze.is_open() && !analyze.fail())
+	{
+		analyze.seekg(0, analyze.end);
+		auto fileSize = analyze.tellg();
+		std::vector<char> analyzeBytes;
+		analyze.seekg(0);
+		analyze.read(&analyzeBytes.front(), analyzeBytes.size());
+	}
+}
 
 
 
