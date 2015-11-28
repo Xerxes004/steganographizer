@@ -25,7 +25,6 @@ void Steganographizer::encrypt(
 
 	auto start = TimeUtil::now();
 
-	//std::vector<char> originalBytes(originalData.c_str(), originalData.c_str() + originalData.size()); //readBytes(originalFile);
 	std::vector<char> originalBytes = readBytes(originalFile);
 	std::vector<char> courierBytes  = equipWithPayload(originalBytes, payload);
 	writeBytes(courierBytes, courierFile);
@@ -191,13 +190,14 @@ const std::vector<char> Steganographizer::extractPayload(
 	return payloadBytes;
 }
 
-const int Steganographizer::getBit(const char &byte, int position)
+const int Steganographizer::getBit(const char &byte, const short position)
 {
 	char mask = 1 << position;
 	return (byte & mask) == 0 ? 0 : 1;
 }
 
-void Steganographizer::setBit(char &byte, int position, unsigned int value)
+void Steganographizer::setBit(char &byte, const unsigned short position, 
+    	const unsigned short value)
 {
 	if (value == 0)
 	{
@@ -217,29 +217,11 @@ void Steganographizer::printByteAsBinary(const char &byte)
 	}
 }
 
-std::string Steganographizer::getFileString(const std::string &ioFile)
-{
-	std::ifstream inFile(ioFile);
-	std::stringstream ss;
-
-	if (inFile.is_open())
-	{
-		ss << inFile.rdbuf() << '\0';
-		inFile.close();
-	}
-	else
-	{
-		throw std::runtime_error("Error opening input file");
-	}
-
-	return ss.str();
-}
-
 void Steganographizer::decrypt(
 	const std::string &modifiedImg, 
 	const std::string ioFile)
 {
-	std::cout << "decrypting...\n";
+	std::cout << "decrypting... ";
 
 	std::vector<char> modifiedBytes = readBytes(modifiedImg);
 	std::vector<char> payloadBytes  = extractPayload(modifiedBytes);

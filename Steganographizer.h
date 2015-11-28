@@ -3,11 +3,10 @@
 
 #include <string>
 #include <iostream>
+#include <stdio.h>
 #include <iomanip>
 #include <vector>
-#include <thread>
 #include <fstream>
-#include <sstream>
 
 #include "TimeUtil.h"
 
@@ -22,40 +21,38 @@ enum class ImgType
 class Steganographizer
 {
 public:
-	void encrypt(
-		const std::string &originalFile, 
-	   	const std::string &courierFile, 
-	   	const std::string ioFile = "");
+	void encrypt(const std::string &originalFile, 
+		const std::string &courierFile, const std::string ioFile = "");
 
 	void decrypt(const std::string &modifiedImg, const std::string ioFile = "");
 
 private:
-	const unsigned short TYPE_1_BMP = 0x0000;
+	const unsigned short TYPE_1_BMP = 0;
 	const unsigned short TYPE_2_BMP = ('B' << 8) | 'M';
 
-	std::string getFileString(const std::string &ioFile);
-	
 	std::vector<char> readBytes(const std::string &fileName);
 
-	void writeBytes(
-		 const std::vector<char> &bytes, 
-		 const std::string &fileName);
+	void writeBytes(const std::vector<char> &bytes, 
+		const std::string &fileName);
 
 	const std::vector<char> equipWithPayload(
-	 	  const std::vector<char> &originalBytes,
-		  const std::string payload);
+		const std::vector<char> &originalBytes, const std::string payload);
 
 	std::vector<char> expandPayload(const std::string &payload);
 	
-	int 	getBytesToThrowOut(const std::vector<char> &originalBytes);
+	int getBytesToThrowOut(const std::vector<char> &originalBytes);
+
 	ImgType getImgType(const unsigned short dWord);
 
-	const std::vector<char> extractPayload(const std::vector<char> &payloadBytes);
+	const std::vector<char> extractPayload(
+		const std::vector<char> &payloadBytes);
 
-	const int  getBit(const char &byte, int position);
-		  void setBit(char &byte, int position, unsigned int value);
+	const int getBit(const char &byte, const short position);
 
-	void printByteAsBinary(const char &byte);
+    void setBit(char &byte, const unsigned short position, 
+    	const unsigned short value);
+
+    void printByteAsBinary(const char &byte);
 };
 
 #endif
