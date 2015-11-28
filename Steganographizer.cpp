@@ -149,11 +149,11 @@ ImgType Steganographizer::getImgType(const unsigned short dWord)
 {
 	auto type = ImgType::NOT_VALID;
 
-	if (dWord == TYPE_1_BMP_MASK)
+	if (dWord == TYPE_1_BMP)
 	{
 		type = ImgType::MSFT_BMP_V1;
 	} 
-	else if (dWord == TYPE_2_BMP_MASK)
+	else if (dWord == TYPE_2_BMP)
 	{
 		type = ImgType::MSFT_BMP_V2;
 	}
@@ -242,7 +242,7 @@ void Steganographizer::decrypt(
 	std::cout << "decrypting...\n";
 
 	std::vector<char> modifiedBytes = readBytes(modifiedImg);
-	std::vector<char> payloadBytes = extractPayload(modifiedBytes);
+	std::vector<char> payloadBytes  = extractPayload(modifiedBytes);
 	std::string payload(payloadBytes.begin(), payloadBytes.end());
 
 	if (ioFile == "")
@@ -255,11 +255,11 @@ void Steganographizer::decrypt(
 		
 		if (output.is_open() && !output.fail())
 		{
-			output.write(payload.c_str(), payload.length()g);
+			output.write(payload.c_str(), payload.length());
 		}
 		else
 		{
-			throw std::runtime_error("Output file failed to open!");
+			throw std::runtime_error("Output file failed to open, aborting.");
 		}
 	}
 }

@@ -30,8 +30,8 @@ public:
 	void decrypt(const std::string &modifiedImg, const std::string ioFile = "");
 
 private:
-	const int TYPE_1_BMP_MASK = 0x00;
-	const int TYPE_2_BMP_MASK = ('B' << 8) | 'M';
+	const unsigned short TYPE_1_BMP = 0x0000;
+	const unsigned short TYPE_2_BMP = ('B' << 8) | 'M';
 
 	std::string getFileString(const std::string &ioFile);
 	
