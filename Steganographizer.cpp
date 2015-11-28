@@ -11,6 +11,7 @@ void Steganographizer::encrypt(
 	{
 		std::cout << "Input: ";
 		std::getline(std::cin, payload);
+		
 		// getline does not input a null character, so we have to add one
 		payload += '\0';
 	}
@@ -21,18 +22,9 @@ void Steganographizer::encrypt(
 		payload += '\0';
 	}
 
-	std::cout << "encrypting... ";
-
-	auto start = TimeUtil::now();
-
 	std::vector<char> originalBytes = readBytes(originalFile);
 	std::vector<char> courierBytes  = equipWithPayload(originalBytes, payload);
 	writeBytes(courierBytes, courierFile);
-
-	auto seconds = TimeUtil::timeFrom(start);
-
-	std::cout << "done in " << std::setprecision(2) << std::fixed 
-	          << seconds << " seconds.\n";
 }
 
 const std::vector<char> Steganographizer::equipWithPayload(
@@ -122,19 +114,18 @@ int Steganographizer::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 
 	switch(getImgType(dWord))
 	{
-	case ImgType::MSFT_BMP_V1:
+	case 1:
 		throwOut = 10;
 		break;
 
-	case ImgType::MSFT_BMP_V2:
+	case 2:
 		throwOut = 14 + int(bitmapBytes.at(14));
 		break;
 
-	case ImgType::MSFT_BMP_V3_V4:
+	case 3:
 		throwOut = dWord;
 		break;
 
-	case ImgType::NOT_VALID:
 	default:
 		throw std::runtime_error("Non-microsoft BMP input, aborting.");
 		break;
@@ -144,21 +135,21 @@ int Steganographizer::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 }
 
 // selects the proper enum type based on the dword of the BMP
-ImgType Steganographizer::getImgType(const unsigned short dWord)
+const unsigned short Steganographizer::getImgType(const unsigned short dWord)
 {
-	auto type = ImgType::NOT_VALID;
+	unsigned short type = 0;
 
 	if (dWord == TYPE_1_BMP)
 	{
-		type = ImgType::MSFT_BMP_V1;
+		type = 1;
 	} 
 	else if (dWord == TYPE_2_BMP)
 	{
-		type = ImgType::MSFT_BMP_V2;
+		type = 2;
 	}
 	else
 	{
-		type = ImgType::MSFT_BMP_V3_V4;
+		type = 3;
 	}
 
 	return type;
@@ -221,10 +212,6 @@ void Steganographizer::decrypt(
 	const std::string &modifiedImg, 
 	const std::string ioFile)
 {
-	std::cout << "decrypting... ";
-
-	auto start = TimeUtil::now();
-
 	std::vector<char> modifiedBytes = readBytes(modifiedImg);
 	std::vector<char> payloadBytes  = extractPayload(modifiedBytes);
 	std::string payload(payloadBytes.begin(), payloadBytes.end());
@@ -247,24 +234,22 @@ void Steganographizer::decrypt(
 			throw std::runtime_error("Output file failed to open, aborting.");
 		}
 	}
-
-	auto seconds = TimeUtil::timeFrom(start);
-
-	std::cout << "done in " << seconds << " seconds.\n";
 }
 
 void Steganographizer::analyze(const std::string &image)
 {
-	std::ifstream analyze(image);
+	auto bytes = readBytes(image);
+	auto imageType = getImgType((bytes.at(0) << 8) | bytes.at(1));
 
-	if (analyze.is_open() && !analyze.fail())
-	{
-		analyze.seekg(0, analyze.end);
-		auto fileSize = analyze.tellg();
-		std::vector<char> analyzeBytes;
-		analyze.seekg(0);
-		analyze.read(&analyzeBytes.front(), analyzeBytes.size());
-	}
+	std::string tab = "    ";
+
+	std::cout << "Analyzing " << image << std::endl;
+	std::cout << tab << "Length     : " << bytes.size() << " bytes\n";
+	std::cout << tab << "BMP type   : " << imageType << std::endl;
+	std::cout << tab << "Max payload: " 
+	          << (bytes.size() - getBytesToThrowOut(bytes)) / 8 
+	          << " characters";
+
 }
 
 

@@ -8,17 +8,6 @@
 #include <vector>
 #include <fstream>
 
-#include "TimeUtil.h"
-
-// enum used to select between BMP types
-enum class ImgType
-{
-	MSFT_BMP_V1, 
-	MSFT_BMP_V2, 
-	MSFT_BMP_V3_V4,
-	NOT_VALID
-};
-
 class Steganographizer
 {
 public:
@@ -45,7 +34,7 @@ private:
 	
 	int getBytesToThrowOut(const std::vector<char> &originalBytes);
 
-	ImgType getImgType(const unsigned short dWord);
+	const unsigned short getImgType(const unsigned short dWord);
 
 	const std::vector<char> extractPayload(
 		const std::vector<char> &payloadBytes);
