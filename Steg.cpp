@@ -54,24 +54,32 @@ void Steg::decrypt(const std::string &courier, const std::string output)
 	read(modifiedBytes, courier);
 	
 	std::string payload = "";
-	extractPayload(payload, modifiedBytes);
-	
-	if (output == "")
-	{
-		std::cout << payload << std::endl;
-	}
-	else
-	{
-		std::ofstream outFile(output);
-		
-		if (outFile.is_open() && !outFile.fail())
+	if (extractPayload(payload, modifiedBytes))
+	{	
+		if (output == "")
 		{
-			outFile.write(payload.c_str(), payload.length());
+			std::cout << payload << std::endl;
 		}
 		else
 		{
-			throw std::runtime_error("Output file failed to open, aborting.");
+			std::ofstream outFile(output);
+			
+			if (outFile.is_open() && !outFile.fail())
+			{
+				outFile.write(payload.c_str(), payload.length());
+			}
+			else
+			{
+				throw std::runtime_error("Output file failed to open, aborting.");
+			}
 		}
+	}
+	else
+	{
+		std::string msg = "Input image is not encrypted!\n";
+		msg += "A non-alphabetical ASCII character was found.";
+
+		throw std::runtime_error(msg);
 	}
 }
 
@@ -99,14 +107,11 @@ void Steg::analyze(const std::string &image)
 	          << " characters\n";
 
     bool encrypted = true;
-    try
-    {
-    	std::string payload;
-    	extractPayload(payload, bytes);
-    }
-    // don't use try/catch for flow of control, kids
-    catch (...)
-    {
+
+    std::string payload;
+	
+	if (!extractPayload(payload, bytes))
+	{
     	encrypted = false;
     }
 
@@ -310,7 +315,7 @@ const unsigned int Steg::getImgType(const unsigned int word)
  * 
  * @param dWord the first field of a BMP image, which varies from type to type
  */
-void Steg::extractPayload(std::string &payload, 
+bool Steg::extractPayload(std::string &payload, 
 	 const std::vector<char> &modifiedBytes)
 {
 	auto dataStart = getBytesToThrowOut(modifiedBytes);
@@ -333,10 +338,7 @@ void Steg::extractPayload(std::string &payload,
 		}
 		else
 		{
-			std::string msg = "Input image is not encrypted!\n";
-			msg += "A non-alphabetical ASCII character was found.";
-
-			throw std::runtime_error(msg.c_str());
+			return false;
 		}
 
 		// stop at a null char
@@ -347,4 +349,6 @@ void Steg::extractPayload(std::string &payload,
 	}
 
 	payload = std::string(payloadBytes.begin(), payloadBytes.end());
+
+	return true;
 }

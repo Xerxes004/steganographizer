@@ -51,7 +51,7 @@ private:
 	void expandPayload(std::vector<char> &expansion, 
 	     const std::string &payload);
 	
-	void extractPayload(std::string &payload, 
+	bool extractPayload(std::string &payload, 
 	 	 const std::vector<char> &modifiedBytes);
 
 	int getBytesToThrowOut(const std::vector<char> &originalBytes);
