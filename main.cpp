@@ -1,14 +1,30 @@
-#include <iostream>
-#include <iomanip>
+/**
+ * This is the main function for the Steg class implementation.
+ * 
+ * @author Wesley Kelly
+ * @version 1.0
+ *
+ * File: Steg.h 
+ * Created: 15 November 2015
+ *
+ * Copyright 2015 Cedarville University, its Computer Science faculty, and the
+ * authors. All rights reserved.
+ * 
+ * Description: This function parses the input arguments in order to use the
+ * Steg class most effectively. There is an argument value for encrypting,
+ * decrypting, analyzing, and scrubbing images.
+ */
+
 #include <vector>
-#include <chrono>
 
 #include "Steg.h"
 
 void showHelpAndExitWithCode(const int code);
+
 void encrypt(const std::vector<std::string> &args, const int index);
 void decrypt(const std::vector<std::string> &args, const int index);
 void analyze(const std::vector<std::string> &args, const int index);
+void scrub  (const std::vector<std::string> &args, const int index);
 
 int main(int argc, char* argv[])
 {
@@ -39,6 +55,11 @@ int main(int argc, char* argv[])
 				analyze(args, i);
 				break;
 			} 
+			if (args.at(i).compare("-s") == 0)
+			{
+				scrub(args, i);
+				break;
+			}
 			if (i == args.size() - 1)
 			{
 				showHelpAndExitWithCode(1);
@@ -145,6 +166,30 @@ void analyze(const std::vector<std::string> &args, const int index)
 	}
 
 	steg.analyze(imageName);
+}
+
+void scrub(const std::vector<std::string> &args, const int index)
+{
+	std::string imageName = "";
+
+	Steg steg;
+
+	if ((index + 1) < args.size())
+	{
+		imageName = args.at(index + 1);
+
+		if (imageName.substr(imageName.size() - 4, 4).compare(".bmp") != 0)
+		{
+			throw std::runtime_error("Argument is not a .bmp");
+		}
+	}
+	else
+	{
+		std::cout << "error: not enough arguments" << std::endl;
+		showHelpAndExitWithCode(1);
+	}
+
+	steg.scrub(imageName);
 }
 
 void showHelpAndExitWithCode(const int code)

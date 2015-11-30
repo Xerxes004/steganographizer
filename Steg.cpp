@@ -1,38 +1,204 @@
 #include "Steg.h"
 
-void Steg::encrypt(
-	const std::string &originalFile, 
-   	const std::string &courierFile, 
-   	const std::string ioFile)
+//public 
+
+/**
+ * Stores a secret message in a BMP file. If an input file is not specified,
+ * then a message from the command line is taken from the user.
+ * 
+ * @param original the original image into which a message will be stored
+ * @param courier the output image constructed from the input, but equipped
+ *                with a payload
+ * @param input an optional input text file that contains the secret message
+ */
+void Steg::encrypt(const std::string &original, const std::string &courier, 
+   	 const std::string input)
 {
 	std::string payload;
 
-	if (ioFile.compare("") == 0)
+	if (input.compare("") == 0)
 	{
 		std::cout << "Input: ";
 		std::getline(std::cin, payload);
-
-		// getline does not input a null character, so we have to add one
-		payload += '\0';
 	}
 	else
 	{
-		auto payloadBytes = readBytes(ioFile);
+		std::vector<char> payloadBytes;
+		read(payloadBytes, input);
 		payload = std::string(payloadBytes.begin(), payloadBytes.end());
-		payload += '\0';
 	}
 
-	std::vector<char> originalBytes = readBytes(originalFile);
-	std::vector<char> courierBytes  = equipWithPayload(originalBytes, payload);
-	writeBytes(courierBytes, courierFile);
+	// getline does not input a null character, so we have to add one
+	payload += '\0';
+
+	std::vector<char> originalBytes;
+	read(originalBytes, original);
+
+	std::vector<char> courierBytes;
+	equipPayload(courierBytes, originalBytes, payload);
+
+	write(courierBytes, courier);
 }
 
-const std::vector<char> Steg::equipWithPayload(
- 	const std::vector<char> &originalBytes,
-	const std::string payload)
+/**
+ * Retrieves a secret message from the specified BMP. The secret message is
+ * stored in an output file if specified, otherwise it is written to the
+ * console.
+ * 
+ * @param courier a BMP image which contains a secret message
+ * @param output an optional output text file where the secret message is stored
+ */
+void Steg::decrypt(const std::string &courier, const std::string output)
 {
-	std::vector<char> modifiedBytes(originalBytes);
-	std::vector<char> payloadExpand = expandPayload(payload);
+	std::vector<char> modifiedBytes;
+	read(modifiedBytes, courier);
+	
+	std::string payload = "";
+	extractPayload(payload, modifiedBytes);
+	
+	if (output == "")
+	{
+		std::cout << payload << std::endl;
+	}
+	else
+	{
+		std::ofstream outFile(output);
+		
+		if (outFile.is_open() && !outFile.fail())
+		{
+			outFile.write(payload.c_str(), payload.length());
+		}
+		else
+		{
+			throw std::runtime_error("Output file failed to open, aborting.");
+		}
+	}
+}
+
+/**
+ * Analyzes the given BMP file to allow the user to plan their message length
+ * appropriately.
+ * 
+ * @param image the image to analyze
+ */
+void Steg::analyze(const std::string &image)
+{
+	std::vector<char> bytes;
+	read(bytes, image);
+	unsigned int dWord = (bytes.at(0) << 8) | bytes.at(1);
+	
+	auto imageType = getImgType(dWord);
+
+	std::string tab = "    ";
+
+	std::cout << "Analyzing " << image << std::endl;
+	std::cout << tab << "Length     : " << bytes.size() << " bytes\n";
+	std::cout << tab << "BMP type   : " << imageType << std::endl;
+	std::cout << tab << "Max payload: " 
+	          << ((bytes.size() - getBytesToThrowOut(bytes)) / 8) - 1
+	          << " characters\n";
+
+    bool encrypted = true;
+    try
+    {
+    	std::string payload;
+    	extractPayload(payload, bytes);
+    }
+    // don't use try/catch for flow of control, kids
+    catch (...)
+    {
+    	encrypted = false;
+    }
+
+    std::cout << tab << "This image ";
+    
+    if (encrypted)
+    {
+    	std::cout << "may be ";
+    }
+    else
+    {
+    	std::cout << "is probably not ";
+    }
+
+    std::cout << "encrypted.\n";
+}
+
+/**
+ * Scrubs an image of all secret messages so you can hide your tracks!
+ * 
+ * @param image the image to scrub
+ */
+void Steg::scrub(const std::string &image)
+{
+	std::vector<char> bytes;
+	read(bytes, image);
+	auto throwOut = getBytesToThrowOut(bytes);
+
+	for (int i = throwOut; i < bytes.size(); i++)
+	{
+		setBit(bytes.at(i), 0, 0);
+	}
+
+	write(bytes, image);
+}
+
+//private
+
+/**
+ * Reads the bytes of a file as characters into a vector buffer.
+ * 
+ * @param buffer the buffer which will store the file information
+ * @param fileName the name of the file to read
+ */
+void Steg::read(std::vector<char> &buffer, const std::string &fileName)
+{
+	std::ifstream input(fileName);
+
+	if (input.is_open() && !input.fail())
+	{
+		input.seekg(0, input.end);
+		auto fileSize = input.tellg();
+		buffer.resize(fileSize);
+		input.seekg(0);
+		input.read(&buffer.front(), buffer.size());
+	}
+	else
+	{
+		throw std::runtime_error("Failed to open file " + fileName);
+	}
+}
+
+/**
+ * Writes a vector of characters to the specified file.
+ * 
+ * @param bytes the bytes to write
+ * @param fileName the file to write to
+ */
+void Steg::write(const std::vector<char> &bytes, const std::string &fileName)
+{
+	std::ofstream output(fileName);
+
+	if (output.is_open() && !output.fail())
+	{
+		output.write(bytes.data(), bytes.size());
+	}
+}
+
+/**
+ * Attaches a secret payload to the bytes of a BMP file.
+ * 
+ * @param modifiedBytes the bytes that have been modified to store the payload
+ * @param originalBytes the bytes of the original BMP file
+ * @param payload the secret message that will be stored in the modifiedBytes
+ */
+void Steg::equipPayload(std::vector<char> &modifiedBytes,
+ 	 const std::vector<char> &originalBytes, const std::string payload)
+{
+	modifiedBytes = originalBytes;
+
+	std::vector<char> payloadExpand;
+	expandPayload(payloadExpand, payload);
 
 	int throwOut = getBytesToThrowOut(originalBytes);
 
@@ -46,13 +212,21 @@ const std::vector<char> Steg::equipWithPayload(
 	{
 		setBit(modifiedBytes.at(i++), 0, int(byte));
 	}
-	return modifiedBytes;
 }
 
-std::vector<char> Steg::expandPayload(const std::string &payload)
+/**
+ * Expands the payload message so that every 1 byte of payload information is
+ * spread over 8 bytes of the image. One bit at a time is inserted into each
+ * byte of the original image in the lowest-order position, effectively
+ * concealing the data without changing the image noticeably.
+ * 
+ * @param bytes the bytes to write
+ * @param fileName the file to write to
+ */
+void Steg::expandPayload(std::vector<char> &expansion, 
+	 const std::string &payload)
 {
 	std::vector<char> payloadBytes(payload.begin(), payload.end());
-	std::vector<char> expansion;
 
 	for (char bytes : payloadBytes)
 	{
@@ -61,46 +235,17 @@ std::vector<char> Steg::expandPayload(const std::string &payload)
 			expansion.push_back(getBit(bytes, i));
 		}
 	}
-
-	return expansion;
 }
 
-std::vector<char> Steg::readBytes(const std::string &fileName)
-{
-	std::ifstream input(fileName);
-	
-	std::vector<char> bytes;
-
-	if (input.is_open() && !input.fail())
-	{
-		input.seekg(0, input.end);
-		auto fileSize = input.tellg();
-		bytes.resize(fileSize);
-		input.seekg(0);
-		input.read(&bytes.front(), bytes.size());
-	}
-	else
-	{
-		throw std::runtime_error("Failed to open file " + fileName);
-	}
-
-	return bytes;
-}
-
-void Steg::writeBytes(
-	const std::vector<char> &bytes,
-	const std::string &fileName)
-{
-	std::ofstream output(fileName);
-
-	if (output.is_open() && !output.fail())
-	{
-		output.write(bytes.data(), bytes.size());
-	}
-}
-
-// analyzes the bytes of the file to see what kind of BMP it is, then throws
-// out the appropriate number of header bits
+/**
+ * Analyzes the bytes of the file to see what kind of BMP it is, returns the
+ * appropriate number of header bits to throw out. The only part of the image
+ * that should be modified is the pixel information. Damaging the header could
+ * make the file unreadable, or have other unforseen consequences.
+ * 
+ * @param bytes the bytes to write
+ * @param fileName the file to write to
+ */
 int Steg::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 {
 	int throwOut = 0;
@@ -112,6 +257,7 @@ int Steg::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 
 	const unsigned short dWord = bitmapBytes.at(1) << 8  | bitmapBytes.at(0);
 
+	// these byte values were found on fileformat.info
 	switch(getImgType(dWord))
 	{
 	case 1:
@@ -134,16 +280,20 @@ int Steg::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 	return throwOut;
 }
 
-// selects the proper enum type based on the dword of the BMP
-const unsigned short Steg::getImgType(const unsigned short dWord)
+/**
+ * Selects the proper enum type based on the dword of the BMP.
+ * 
+ * @param dWord the first field of a BMP image, which varies from type to type
+ */
+const unsigned int Steg::getImgType(const unsigned int word)
 {
-	unsigned short type = 0;
+	unsigned int type = 0;
 
-	if (dWord == TYPE_1_BMP)
+	if (word == TYPE_1_BMP)
 	{
 		type = 1;
 	} 
-	else if (dWord == TYPE_2_BMP)
+	else if (word == TYPE_2_BMP)
 	{
 		type = 2;
 	}
@@ -155,8 +305,13 @@ const unsigned short Steg::getImgType(const unsigned short dWord)
 	return type;
 }
 
-const std::vector<char> Steg::extractPayload(
-	const std::vector<char> &modifiedBytes)
+/**
+ * Selects the proper enum type based on the dword of the BMP.
+ * 
+ * @param dWord the first field of a BMP image, which varies from type to type
+ */
+void Steg::extractPayload(std::string &payload, 
+	 const std::vector<char> &modifiedBytes)
 {
 	auto dataStart = getBytesToThrowOut(modifiedBytes);
 	std::vector<char> payloadBytes;
@@ -172,7 +327,7 @@ const std::vector<char> Steg::extractPayload(
 			// and reconstructs a character from their lowest-order bits.
 			setBit(c, j, getBit(modifiedBytes.at(i + j), 0));
 		}
-		if (int(c) <= 127 && int(c) >= 0)
+		if (isAscii(c))
 		{
 			payloadBytes.push_back(c);
 		}
@@ -184,100 +339,12 @@ const std::vector<char> Steg::extractPayload(
 			throw std::runtime_error(msg.c_str());
 		}
 
+		// stop at a null char
 		if (payloadBytes.back() == '\0')
 		{
 			break;
 		}
 	}
 
-	return payloadBytes;
+	payload = std::string(payloadBytes.begin(), payloadBytes.end());
 }
-
-int Steg::getBit(const char &byte, const short position)
-{
-	char mask = 1 << position;
-	return (byte & mask) == 0 ? 0 : 1;
-}
-
-void Steg::setBit(char &byte, const unsigned short position, 
-    	const unsigned short value)
-{
-	if (value == 0)
-	{
-		byte &= ~(1 << position);
-	}
-	else
-	{
-		byte |= (1 << position);
-	}
-}
-
-void Steg::decrypt(
-	const std::string &courier, 
-	const std::string ioFile)
-{
-	std::vector<char> modifiedBytes = readBytes(courier);
-	std::vector<char> payloadBytes  = extractPayload(modifiedBytes);
-	std::string payload(payloadBytes.begin(), payloadBytes.end());
-
-	if (ioFile == "")
-	{
-		std::cout << "Secret message:" << std::endl << payload << std::endl;
-	}
-	else
-	{
-		std::ofstream output(ioFile);
-		
-		if (output.is_open() && !output.fail())
-		{
-			output.write(payload.c_str(), payload.length());
-		}
-		else
-		{
-			throw std::runtime_error("Output file failed to open, aborting.");
-		}
-	}
-}
-
-void Steg::analyze(const std::string &image)
-{
-	auto bytes = readBytes(image);
-	auto imageType = getImgType((bytes.at(0) << 8) | bytes.at(1));
-
-	std::string tab = "    ";
-
-	std::cout << "Analyzing " << image << std::endl;
-	std::cout << tab << "Length     : " << bytes.size() << " bytes\n";
-	std::cout << tab << "BMP type   : " << imageType << std::endl;
-	std::cout << tab << "Max payload: " 
-	          << ((bytes.size() - getBytesToThrowOut(bytes)) / 8) - 1
-	          << " characters\n";
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

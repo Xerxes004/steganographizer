@@ -3,4 +3,4 @@
 *.txt
 *.[oae]
 *test*
-bin/*
+*.bin
