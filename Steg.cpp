@@ -142,7 +142,8 @@ void Steg::scrub(const std::string &image)
 
 	for (int i = throwOut; i < bytes.size(); i++)
 	{
-		setBit(bytes.at(i), 0, 0);
+		// set all low-order bits to 1
+		setBit(bytes.at(i), 0, 1);
 	}
 
 	write(bytes, image);
@@ -260,10 +261,10 @@ int Steg::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 		throw std::runtime_error("Input image too small, check file.");
 	}
 
-	const unsigned short dWord = bitmapBytes.at(1) << 8  | bitmapBytes.at(0);
+	const unsigned int dWord = bitmapBytes.at(1) << 8  | bitmapBytes.at(0);
 
 	// these byte values were found on fileformat.info
-	switch(getImgType(dWord))
+	switch(getImgType((unsigned short)(dWord)))
 	{
 	case 1:
 		throwOut = 10;
