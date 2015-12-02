@@ -312,9 +312,12 @@ const unsigned int Steg::getImgType(const unsigned int word)
 }
 
 /**
- * Selects the proper enum type based on the dword of the BMP.
+ * Extracts a payload from a vector of bytes. The low-order bit of each byte
+ * forms part of a character. One lower-order bit from 8 bytes forms a 
+ * character.
  * 
- * @param dWord the first field of a BMP image, which varies from type to type
+ * @param payload the payload extracted from the bytes
+ * @param modifiedBytes the bytes that have payload data in them
  */
 bool Steg::extractPayload(std::string &payload, 
 	 const std::vector<char> &modifiedBytes)
@@ -339,6 +342,7 @@ bool Steg::extractPayload(std::string &payload,
 		}
 		else
 		{
+			// a non-ascii character was found, and the operation is aborted
 			return false;
 		}
 
