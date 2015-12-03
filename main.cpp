@@ -196,24 +196,23 @@ void showHelpAndExitWithCode(const int code)
 {
 	std::cout << "options:" << std::endl;
 
-	std::cout << "\tEncrypt the given image with a message from the command \n"
-		      << "\tline, or from the optional input file.\n"
-	  		  << "\t-e <original image> <modified image> [optional input file]"
+	std::cout << "  Encrypt the given image with a message from the command \n"
+		      << "  line, or from the optional input file.\n"
+	  		  << "  -e <original image> <modified image> [optional input file]"
 			  << std::endl;
 
-	std::cout << "\n\tDecrypt the given image. The message is written to the "
-			  << "\n\tconsole, or stored in the optional output file."
-			  << "\n\t-d <modified image> [optional output file]\n";
+	std::cout << "\n  Decrypt the given image. The message is written to the "
+			  << "\n  console, or stored in the optional output file."
+			  << "\n  -d <modified image> [optional output file]\n";
 
-	std::cout << "\n\tAnalyze the given bmp file\n"
-		      << "\t-a <image.bmp>";
+	std::cout << "\n  Analyze the given bmp file\n"
+		      << "  -a <image.bmp>\n\n";
 
+	std::cout << "  Scrub the given image of all hidden info! This data is\n"
+	          << "  not recoverable unless you have a backup.\n"
+			  << "  -s <image.bmp>\n\n";
 
-	std::cout << "\n\n\tScrub the given image of all hidden info! This data\n"
-			  << "\tis not recoverable unless you have a backup.\n"
-			  << "\t-s <image.bmp>";
-
-	std::cout << "\n\n\t-h show this help\n\n";
+	std::cout << "  -h show this help\n\n";
 
 	exit(code);
 }
