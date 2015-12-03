@@ -25,4 +25,7 @@ Decrypt the given image. The message is written to the console, or stored in the
 Analyze the given bmp file
 -a <image.bmp>
 
+Scrub the given image of all hidden info! This data is not recoverable unless you have a backup.
+-s <image.bmp>
+
 -h show this help

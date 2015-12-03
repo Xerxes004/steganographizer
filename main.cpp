@@ -208,6 +208,11 @@ void showHelpAndExitWithCode(const int code)
 	std::cout << "\n\tAnalyze the given bmp file\n"
 		      << "\t-a <image.bmp>";
 
+
+	std::cout << "\n\n\tScrub the given image of all hidden info! This data\n"
+			  << "\tis not recoverable unless you have a backup.\n"
+			  << "\t-s <image.bmp>";
+
 	std::cout << "\n\n\t-h show this help\n\n";
 
 	exit(code);
