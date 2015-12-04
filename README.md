@@ -1,7 +1,7 @@
 <h1>Steganographizer</h1>
 <p>Purpose: This program enables a user to hide ASCII text inside of a BMP image.<br>
-<p>Author : Wesley Kelly (c) 2015, Wesley Kelly and Cedarville University, all rights reserved<br>
-<p>Created: 23 November 2015</p>
+Author : Wesley Kelly (c) 2015, Wesley Kelly and Cedarville University, all rights reserved<br>
+Created: 23 November 2015</p>
 </p>
 
 <h3>To get and compile:</h3>
