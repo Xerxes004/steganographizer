@@ -17,9 +17,9 @@ $ make</code></pre>
 
 <h3>options:</h3>
 
-Encrypt the given image with a message from the command line, or from the optional input file.
+<pre><p>Encrypt the given image with a message from the command line, or from the optional input file.
 NOTE: input only works with ASCII (8 bit) text.
-NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.
+NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.</p></pre>
 <pre><code>-e &lt;original image&gt; &lt;modified image&gt; [optional input file]</code></pre>
 
 Decrypt the given image. The message is written to the console, or stored in the optional output file.
@@ -31,7 +31,8 @@ Analyze the given bmp file
 Scrub the given image of all hidden info! This data is not recoverable unless you have a backup.
 <pre><code>-s &lt;image.bmp&gt;</code></pre>
 
-<pre><code>-h show this help</code></pre>
+Show this help
+<pre><code>-h</code></pre>
 
 <h3>To clean the directory of object files and executable: </h3>
 <pre><code>$ make clean</code></pre>
