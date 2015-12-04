@@ -6,11 +6,9 @@
 
 <h3>To get and compile:</h3>
 
-<pre><code>
-	$ git clone https://github.com/Xerxes004/steganographizer.git
-	$ cd ./steganographizer/
-	$ make
-</code></pre>
+<pre><code>$ git clone https://github.com/Xerxes004/steganographizer.git
+$ cd ./steganographizer/
+$ make</code></pre>
 
 <h3>To run:</h3>
 <p>Note: test_input.bmp and romeo_and_juliet.txt are given as example files to play with</p>
