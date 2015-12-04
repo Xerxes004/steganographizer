@@ -17,9 +17,9 @@ $ make</code></pre>
 
 <h3>options:</h3>
 
-<pre><p>Encrypt the given image with a message from the command line, or from the optional input file.
+<p>Encrypt the given image with a message from the command line, or from the optional input file.
 NOTE: input only works with ASCII (8 bit) text.
-NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.</p></pre>
+NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.</p>
 <pre><code>-e &lt;original image&gt; &lt;modified image&gt; [optional input file]</code></pre>
 
 Decrypt the given image. The message is written to the console, or stored in the optional output file.
