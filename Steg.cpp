@@ -97,8 +97,6 @@ void Steg::analyze(const std::string &image)
 	
 	auto imageType = getImgType(dWord);
 
-	std::string tab = "    ";
-
 	std::cout << "Analyzing " << image << std::endl;
 	std::cout << "    Length     : " << bytes.size() << " bytes\n";
 	std::cout << "    BMP type   : " << imageType << std::endl;
@@ -115,7 +113,7 @@ void Steg::analyze(const std::string &image)
     	encrypted = false;
     }
 
-    std::cout << tab << "This image ";
+    std::cout << "    This image ";
     
     if (encrypted)
     {
