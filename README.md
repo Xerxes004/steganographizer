@@ -6,11 +6,10 @@ Created: 23 November 2015
 </p>
 <p>
 To get and compile:
-
+</p>
 <code>$ git clone https://github.com/Xerxes004/steganographizer.git</code>
 <code>$ cd ./steganographizer/</code>
 <code>$ make</code>
-</p>
 <p>
 To run:
 Note: test_input.bmp and romeo_and_juliet.txt are given as example files to play with
