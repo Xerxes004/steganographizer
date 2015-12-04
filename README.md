@@ -7,34 +7,34 @@ Created: 23 November 2015
 <p>
 To get and compile:
 </p>
-<code>$ git clone https://github.com/Xerxes004/steganographizer.git</code>
-<code>$ cd ./steganographizer/</code>
-<code>$ make</code>
+<p><code>$ git clone https://github.com/Xerxes004/steganographizer.git</code></p>
+<p><code>$ cd ./steganographizer/</code></p>
+<p><code>$ make</code></p>
 <p>
 To run:
 Note: test_input.bmp and romeo_and_juliet.txt are given as example files to play with
 
-<code>$ ./steg &lt;option&gt; &lt;args&gt;</code>
+<p><code>$ ./steg &lt;option&gt; &lt;args&gt;</code></p>
 
 options:
 
 Encrypt the given image with a message from the command line, or from the optional input file.
 NOTE: input only works with ASCII (8 bit) text.
 NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.
-<code>-e &lt;original image&gt; &lt;modified image&gt; [optional input file]</code>
+<p><code>-e &lt;original image&gt; &lt;modified image&gt; [optional input file]</code></p>
 
 Decrypt the given image. The message is written to the console, or stored in the optional output file.
-<code>-d &lt;modified image&gt; [optional output file]</code>
+<p><code>-d &lt;modified image&gt; [optional output file]</code></p>
 
 Analyze the given bmp file
-<code>-a &lt;image.bmp&gt;</code>
+<p><code>-a &lt;image.bmp&gt;</code></p>
 
 Scrub the given image of all hidden info! This data is not recoverable unless you have a backup.
-<code>-s &lt;image.bmp&gt;</code>
+<p><code>-s &lt;image.bmp&gt;</code></p>
 
-<code>-h show this help</code>
+<p><code>-h show this help</code></p>
 </p>
 <p>
 To clean the directory of object files and executable: 
-    <code>$ make clean</code>
+    <p><code>$ make clean</code></p>
 </p>
