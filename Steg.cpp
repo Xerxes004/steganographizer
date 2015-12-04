@@ -77,7 +77,7 @@ void Steg::decrypt(const std::string &courier, const std::string output)
 	else
 	{
 		std::string msg = "Input image is not encrypted!\n";
-		msg += "A non-alphabetical ASCII character was found.";
+		msg += "A non-ASCII character was found.";
 
 		throw std::runtime_error(msg);
 	}
