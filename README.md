@@ -1,26 +1,33 @@
 <h1>Steganographizer</h1>
+
 <p>Purpose: This program enables a user to hide ASCII text inside of a BMP image.<br>
 Author : Wesley Kelly (c) 2015, Wesley Kelly and Cedarville University, all rights reserved<br>
 Created: 23 November 2015</p>
-</p>
 
 <h3>To get and compile:</h3>
 
-<pre><code>$ git clone https://github.com/Xerxes004/steganographizer.git
+<pre><code>
+$ git clone https://github.com/Xerxes004/steganographizer.git
 $ cd ./steganographizer/
-$ make</code></pre>
+$ make
+</code></pre>
 
 <h3>To run:</h3>
 <p>Note: test_input.bmp and romeo_and_juliet.txt are given as example files to play with</p>
 
-<pre><code>$ ./steg &lt;option&gt; &lt;args&gt;</code></pre>
+<pre><code>
+$ ./steg &lt;option&gt; &lt;args&gt;
+</code></pre>
 
 <h3>options:</h3>
 
-<p>Encrypt the given image with a message from the command line, or from the optional input file.<br>
+<p>
+Encrypt the given image with a message from the command line, or from the optional input file.<br>
 NOTE: input only works with ASCII (8 bit) text.<br>
 NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.</p>
-<pre><code>-e &lt;original image&gt; &lt;modified image&gt; [optional input file]</code></pre>
+<pre><code>
+-e &lt;original image&gt; &lt;modified image&gt; [optional input file]
+</code></pre>
 
 Decrypt the given image. The message is written to the console, or stored in the optional output file.
 <pre><code>-d &lt;modified image&gt; [optional output file]</code></pre>
