@@ -4,9 +4,11 @@ Author : Wesley Kelly (c) 2015, Wesley Kelly and Cedarville University, all righ
 Created: 23 November 2015
 
 To get and compile:
+<code>
 $ git clone https://github.com/Xerxes004/steganographizer.git
 $ cd ./steganographizer/
 $ make
+</code>
 
 To run:
 Note: test_input.bmp and romeo_and_juliet.txt are given as example files to play with

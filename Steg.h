@@ -31,9 +31,9 @@ class Steg
 {
 public:
 	void encrypt(const std::string &originalImg, const std::string &courier, 
-		 const std::string inFile = "");
+		 const std::string input = "");
 
-	void decrypt(const std::string &courierImg, const std::string outFile = "");
+	void decrypt(const std::string &courierImg, const std::string output = "");
 
 	void analyze(const std::string &image);
 
@@ -68,11 +68,8 @@ private:
 	 * @return the bit at the position specified
 	 */
 	inline const short getBit(const char &byte, const short position)
-	{	
-		if (position > 7)
-		{
-			char mask =  1 << position;
-		}
+	{		
+		char mask =  1 << position;
 
 		return (byte & mask) == 0 ? 0 : 1;
 	}

@@ -9,14 +9,14 @@
  * @param original the original image into which a message will be stored
  * @param courier the output image constructed from the input, but equipped
  *                with a payload
- * @param inFile an optional input text file that contains the secret message
+ * @param input an optional input text file that contains the secret message
  */
 void Steg::encrypt(const std::string &original, const std::string &courier, 
-   	 const std::string inFile)
+   	 const std::string input)
 {
 	std::string payload;
 
-	if (inFile.compare("") == 0)
+	if (input.compare("") == 0)
 	{
 		std::cout << "Input: ";
 		std::getline(std::cin, payload);
@@ -24,7 +24,7 @@ void Steg::encrypt(const std::string &original, const std::string &courier,
 	else
 	{
 		std::vector<char> payloadBytes;
-		read(payloadBytes, inFile);
+		read(payloadBytes, input);
 		payload = std::string(payloadBytes.begin(), payloadBytes.end());
 	}
 
@@ -46,24 +46,23 @@ void Steg::encrypt(const std::string &original, const std::string &courier,
  * console.
  * 
  * @param courier a BMP image which contains a secret message
- * @param outFile an optional output text file where the secret message is stored
+ * @param output an optional output text file where the secret message is stored
  */
-void Steg::decrypt(const std::string &courier, const std::string outFile)
+void Steg::decrypt(const std::string &courier, const std::string output)
 {
 	std::vector<char> modifiedBytes;
 	read(modifiedBytes, courier);
 	
 	std::string payload = "";
-
 	if (extractPayload(payload, modifiedBytes))
 	{	
-		if (outFile == "")
+		if (output == "")
 		{
 			std::cout << payload << std::endl;
 		}
 		else
 		{
-			std::ofstream outFile(outFile);
+			std::ofstream outFile(output);
 			
 			if (outFile.is_open() && !outFile.fail())
 			{
