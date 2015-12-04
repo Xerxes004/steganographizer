@@ -9,16 +9,12 @@ $ cd ./steganographizer/
 $ make</code></pre>
 <h3>To run:</h3>
 <p>Note: test_input.bmp and romeo_and_juliet.txt are given as example files to play with</p>
-<pre><code>
-$ ./steg &lt;option&gt; &lt;args&gt;
-</code></pre>
+<pre><code>$ ./steg &lt;option&gt; &lt;args&gt;</code></pre>
 <h3>Options:</h3>
 <p>Encrypt the given image with a message from the command line, or from the optional input file.<br>
 NOTE: input only works with ASCII (8 bit) text.<br>
 NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.</p>
-<pre><code>
--e &lt;original image&gt; &lt;modified image&gt; [optional input file]
-</code></pre>
+<pre><code>-e &lt;original image&gt; &lt;modified image&gt; [optional input file]</code></pre>
 <p>Decrypt the given image. The message is written to the console, or stored in the optional output file.</p>
 <pre><code>-d &lt;modified image&gt; [optional output file]</code></pre>
 <p>Analyze the given bmp file</p>
