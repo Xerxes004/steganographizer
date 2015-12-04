@@ -12,23 +12,23 @@ To run:
 Note: test_input.bmp and romeo_and_juliet.txt are given as example files to play with
 $ ./steg <option> <args>
 
-	options:
+options:
 
-    Encrypt the given image with a message from the command line, or from the optional input file.
-    NOTE: input only works with ASCII (8 bit) text.
-    NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.
-    -e <original image> <modified image> [optional input file]
-	
-	Decrypt the given image. The message is written to the console, or stored in the optional output file.
-	-d <modified image> [optional output file]
+Encrypt the given image with a message from the command line, or from the optional input file.
+NOTE: input only works with ASCII (8 bit) text.
+NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.
+-e <original image> <modified image> [optional input file]
 
-	Analyze the given bmp file
-	-a <image.bmp>
+Decrypt the given image. The message is written to the console, or stored in the optional output file.
+-d <modified image> [optional output file]
 
-	Scrub the given image of all hidden info! This data is not recoverable unless you have a backup.
-	-s <image.bmp>
+Analyze the given bmp file
+-a <image.bmp>
 
-	-h show this help
+Scrub the given image of all hidden info! This data is not recoverable unless you have a backup.
+-s <image.bmp>
+
+-h show this help
 
 To clean the directory of object files and executable: 
 $ make clean
