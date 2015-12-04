@@ -7,9 +7,11 @@ Created: 23 November 2015
 <p>
 To get and compile:
 </p>
-<p><code>$ git clone https://github.com/Xerxes004/steganographizer.git</code></p>
-<p><code>$ cd ./steganographizer/</code></p>
-<p><code>$ make</code></p>
+<p>
+<code>$ git clone https://github.com/Xerxes004/steganographizer.git
+$ cd ./steganographizer/
+$ make</code>
+</p>
 <p>
 To run:
 Note: test_input.bmp and romeo_and_juliet.txt are given as example files to play with
