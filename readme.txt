@@ -1,4 +1,5 @@
 Steganographizer
+
 Purpose: This program enables a user to hide ASCII text inside of a BMP image.
 Author : Wesley Kelly (c) 2015, Wesley Kelly and Cedarville University, all rights reserved
 Created: 23 November 2015

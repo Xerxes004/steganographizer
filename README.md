@@ -1,5 +1,7 @@
 <h1>Steganographizer</h1>
 
+<p><i>Note: readme.txt is human-legible as a text file, whereas README.md is not!</i><p>
+
 <p>Purpose: This program enables a user to hide ASCII text inside of a BMP image.<br>
 Author : Wesley Kelly (c) 2015, Wesley Kelly and Cedarville University, all rights reserved<br>
 Created: 23 November 2015</p>
