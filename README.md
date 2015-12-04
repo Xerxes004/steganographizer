@@ -1,6 +1,6 @@
 <h1>Steganographizer</h1>
-<p>Purpose: This program enables a user to hide ASCII text inside of a BMP image.</p>
-<p>Author : Wesley Kelly (c) 2015, Wesley Kelly and Cedarville University, all rights reserved</p>
+<p>Purpose: This program enables a user to hide ASCII text inside of a BMP image.<br>
+<p>Author : Wesley Kelly (c) 2015, Wesley Kelly and Cedarville University, all rights reserved<br>
 <p>Created: 23 November 2015</p>
 </p>
 
@@ -17,8 +17,8 @@ $ make</code></pre>
 
 <h3>options:</h3>
 
-<p>Encrypt the given image with a message from the command line, or from the optional input file.
-NOTE: input only works with ASCII (8 bit) text.
+<p>Encrypt the given image with a message from the command line, or from the optional input file.<br>
+NOTE: input only works with ASCII (8 bit) text.<br>
 NOTE: encryption only works with BMP files that have 8-bit color values. Type 2 BMP's work the best.</p>
 <pre><code>-e &lt;original image&gt; &lt;modified image&gt; [optional input file]</code></pre>
 
