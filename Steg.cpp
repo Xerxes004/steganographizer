@@ -9,14 +9,14 @@
  * @param original the original image into which a message will be stored
  * @param courier the output image constructed from the input, but equipped
  *                with a payload
- * @param input an optional input text file that contains the secret message
+ * @param inFile an optional input text file that contains the secret message
  */
 void Steg::encrypt(const std::string &original, const std::string &courier, 
-   	 const std::string input)
+   	 const std::string inFile)
 {
 	std::string payload;
 
-	if (input.compare("") == 0)
+	if (inFile.compare("") == 0)
 	{
 		std::cout << "Input: ";
 		std::getline(std::cin, payload);
@@ -24,7 +24,7 @@ void Steg::encrypt(const std::string &original, const std::string &courier,
 	else
 	{
 		std::vector<char> payloadBytes;
-		read(payloadBytes, input);
+		read(payloadBytes, inFile);
 		payload = std::string(payloadBytes.begin(), payloadBytes.end());
 	}
 
@@ -46,23 +46,24 @@ void Steg::encrypt(const std::string &original, const std::string &courier,
  * console.
  * 
  * @param courier a BMP image which contains a secret message
- * @param output an optional output text file where the secret message is stored
+ * @param outFile an optional output text file where the secret message is stored
  */
-void Steg::decrypt(const std::string &courier, const std::string output)
+void Steg::decrypt(const std::string &courier, const std::string outFile)
 {
 	std::vector<char> modifiedBytes;
 	read(modifiedBytes, courier);
 	
 	std::string payload = "";
+
 	if (extractPayload(payload, modifiedBytes))
 	{	
-		if (output == "")
+		if (outFile == "")
 		{
 			std::cout << payload << std::endl;
 		}
 		else
 		{
-			std::ofstream outFile(output);
+			std::ofstream outFile(outFile);
 			
 			if (outFile.is_open() && !outFile.fail())
 			{
@@ -100,9 +101,9 @@ void Steg::analyze(const std::string &image)
 	std::string tab = "    ";
 
 	std::cout << "Analyzing " << image << std::endl;
-	std::cout << tab << "Length     : " << bytes.size() << " bytes\n";
-	std::cout << tab << "BMP type   : " << imageType << std::endl;
-	std::cout << tab << "Max payload: " 
+	std::cout << "    Length     : " << bytes.size() << " bytes\n";
+	std::cout << "    BMP type   : " << imageType << std::endl;
+	std::cout << "    Max payload: " 
 	          << ((bytes.size() - getBytesToThrowOut(bytes)) / 8) - 1
 	          << " characters\n";
 

@@ -31,15 +31,17 @@ class Steg
 {
 public:
 	void encrypt(const std::string &originalImg, const std::string &courier, 
-		 const std::string ioFile = "");
+		 const std::string inFile = "");
 
-	void decrypt(const std::string &courierImg, const std::string ioFile = "");
+	void decrypt(const std::string &courierImg, const std::string outFile = "");
 
 	void analyze(const std::string &image);
 
 	void scrub(const std::string &image);
 
 private:
+	// these are integers because we are comparing them to integers in 
+	// getImgType
 	const unsigned int TYPE_1_BMP = 0;
 	const unsigned int TYPE_2_BMP = ('B' << 8) | 'M';
 
@@ -66,8 +68,11 @@ private:
 	 * @return the bit at the position specified
 	 */
 	inline const short getBit(const char &byte, const short position)
-	{		
-		char mask =  1 << position;
+	{	
+		if (position > 7)
+		{
+			char mask =  1 << position;
+		}
 
 		return (byte & mask) == 0 ? 0 : 1;
 	}
