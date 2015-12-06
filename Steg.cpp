@@ -349,7 +349,7 @@ const unsigned int Steg::headerSize(const std::vector<char> &bitmapBytes)
 		throw std::runtime_error("Non-microsoft BMP input, aborting.");
 		break;
 	}
-
+ 
 	return throwOut;
 }
 
