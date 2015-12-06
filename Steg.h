@@ -45,7 +45,7 @@ private:
 	const unsigned short TYPE_2_BMP = ('B' << 8) | 'M';
 
 	void read(std::vector<char> &buffer, const std::string &fileName);
-
+ 
 	void write(const std::vector<char> &bytes, const std::string &fileName);
 
 	void equipPayload(std::vector<char> &modifiedBytes,
