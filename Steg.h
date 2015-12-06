@@ -40,25 +40,26 @@ public:
 	void scrub(const std::string &image);
 
 private:
-	// these are integers because we are comparing them to integers in 
-	// getImgType
+	// the appropriate byte values for type 1 and 2 BMP's
 	const unsigned short TYPE_1_BMP = 0;
 	const unsigned short TYPE_2_BMP = ('B' << 8) | 'M';
 
 	void read(std::vector<char> &buffer, const std::string &fileName);
+
 	void write(const std::vector<char> &bytes, const std::string &fileName);
 
 	void equipPayload(std::vector<char> &modifiedBytes,
  	 	 const std::vector<char> &originalBytes, const std::string payload);
+
 	void expandPayload(std::vector<unsigned short> &expansion, 
 	     const std::string &payload);
 	
 	bool extractPayload(std::string &payload, 
 	 	 const std::vector<char> &modifiedBytes);
 
-	const unsigned int bytesToThrowOut(const std::vector<char> &originalBytes);
+	const unsigned int headerSize(const std::vector<char> &bitmapBytes);
 
-	const unsigned short getImgType(const unsigned short word);
+	const unsigned short bitmapType(const unsigned short word);
 
 	/**
 	 * Gets the bit at the position specified. Position 0 is the right-most bit.
@@ -78,8 +79,8 @@ private:
 	 * Gets the bit at the position specified. Position 0 is the right-most bit.
 	 * 
 	 * @param byte the byte being modified
-	 * @param position the position of interest, whose value will be changed to the
-	 *        value specified
+	 * @param position the position of interest, whose value will be changed to 
+	 *	      the value specified
 	 * @param value the value that will be set in the specified position
 	 */
 	inline void setBit(char &byte, const unsigned short position, 
@@ -89,9 +90,13 @@ private:
 		{
 			byte &= ~(1 << position);
 		}
-		else
+		else if (value == 1)
 		{
 			byte |= (1 << position);
+		}
+		else
+		{
+			throw std::runtime_error("setBit: Invalid value specified");
 		}
 	}
 
