@@ -42,23 +42,23 @@ public:
 private:
 	// these are integers because we are comparing them to integers in 
 	// getImgType
-	const unsigned int TYPE_1_BMP = 0;
-	const unsigned int TYPE_2_BMP = ('B' << 8) | 'M';
+	const unsigned short TYPE_1_BMP = 0;
+	const unsigned short TYPE_2_BMP = ('B' << 8) | 'M';
 
 	void read(std::vector<char> &buffer, const std::string &fileName);
 	void write(const std::vector<char> &bytes, const std::string &fileName);
 
 	void equipPayload(std::vector<char> &modifiedBytes,
  	 	 const std::vector<char> &originalBytes, const std::string payload);
-	void expandPayload(std::vector<char> &expansion, 
+	void expandPayload(std::vector<unsigned short> &expansion, 
 	     const std::string &payload);
 	
 	bool extractPayload(std::string &payload, 
 	 	 const std::vector<char> &modifiedBytes);
 
-	int getBytesToThrowOut(const std::vector<char> &originalBytes);
+	const unsigned int bytesToThrowOut(const std::vector<char> &originalBytes);
 
-	const unsigned int getImgType(const unsigned int word);
+	const unsigned short getImgType(const unsigned short word);
 
 	/**
 	 * Gets the bit at the position specified. Position 0 is the right-most bit.
@@ -67,7 +67,7 @@ private:
 	 * @param position the position of interest, whose value will be returned
 	 * @return the bit at the position specified
 	 */
-	inline const short getBit(const char &byte, const short position)
+	inline const unsigned short getBit(const char &byte, const short position)
 	{		
 		char mask =  1 << position;
 

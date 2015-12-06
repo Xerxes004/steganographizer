@@ -1,5 +1,5 @@
-CC=g++ -std=c++11 -stdlib=libc++
-#CC=clang++ -std=c++11 -stdlib=libc++
+#CC=g++ -std=c++11 -stdlib=libc++
+CC=clang++ -std=c++11 -stdlib=libc++
 
 all: steg.e
 

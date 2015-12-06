@@ -87,21 +87,27 @@ void Steg::decrypt(const std::string &courier, const std::string output)
  * Analyzes the given BMP file to allow the user to plan their message length
  * appropriately.
  * 
- * @param image the image to analyze
+ * @param image the name of the image to analyze
  */
 void Steg::analyze(const std::string &image)
 {
 	std::vector<char> bytes;
 	read(bytes, image);
-	unsigned int dWord = (bytes.at(0) << 8) | bytes.at(1);
+	const unsigned int dWord = 
+		bytes.at(0) << 24 | 
+		bytes.at(1) << 16 | 
+		bytes.at(2) << 8  | 
+		bytes.at(3);
 	
-	auto imageType = getImgType(dWord);
+	auto imageType = getImgType(dWord >> 16);
+	auto throwOut = bytesToThrowOut(bytes);
 
-	std::cout << "Analyzing " << image << std::endl;
-	std::cout << "    Length     : " << bytes.size() << " bytes\n";
+	std::cout << "  Analyzing \"" << image << "\"" << std::endl;
+	std::cout << "    Image size : " << bytes.size() << " bytes\n";
+	std::cout << "    Header size: " << throwOut << " bytes" << std::endl;
 	std::cout << "    BMP type   : " << imageType << std::endl;
 	std::cout << "    Max payload: " 
-	          << ((bytes.size() - getBytesToThrowOut(bytes)) / 8) - 1
+	          << ((bytes.size() - bytesToThrowOut(bytes)) / 8) - 1
 	          << " characters\n";
 
     bool encrypted = true;
@@ -134,17 +140,17 @@ void Steg::analyze(const std::string &image)
  */
 void Steg::scrub(const std::string &image)
 {
-	std::vector<char> bytes;
-	read(bytes, image);
-	auto throwOut = getBytesToThrowOut(bytes);
+	std::vector<char> scrubbedBytes;
+	read(scrubbedBytes, image);
+	auto throwOut = bytesToThrowOut(scrubbedBytes);
 
-	for (int i = throwOut; i < bytes.size(); i++)
+	for (int i = throwOut; i < scrubbedBytes.size(); i++)
 	{
 		// set all low-order bits to 1
-		setBit(bytes.at(i), 0, 1);
+		setBit(scrubbedBytes.at(i), 0, 1);
 	}
 
-	write(bytes, image);
+	write(scrubbedBytes, image);
 }
 
 //private
@@ -201,33 +207,37 @@ void Steg::equipPayload(std::vector<char> &modifiedBytes,
 {
 	modifiedBytes = originalBytes;
 
-	std::vector<char> payloadExpand;
-	expandPayload(payloadExpand, payload);
+	std::vector<unsigned short> expansion;
+	expandPayload(expansion, payload);
 
-	int throwOut = getBytesToThrowOut(originalBytes);
+	int throwOut = bytesToThrowOut(originalBytes);
 
-	if (modifiedBytes.size() - throwOut < payloadExpand.size())
+	if (modifiedBytes.size() - throwOut < expansion.size())
 	{
 		throw std::runtime_error("Image is not big enough to hold this data!");
 	}
 	
 	int i = throwOut;
-	for (char byte : payloadExpand)
+
+	for (unsigned short val : expansion)
 	{
-		setBit(modifiedBytes.at(i++), 0, int(byte));
+		// set the lowest-order bit of this byte to the value of val
+		setBit(modifiedBytes.at(i++), 0, val);
 	}
 }
 
 /**
- * Expands the payload message so that every 1 byte of payload information is
- * spread over 8 bytes of the image. One bit at a time is inserted into each
- * byte of the original image in the lowest-order position, effectively
- * concealing the data without changing the image noticeably.
- * 
- * @param bytes the bytes to write
- * @param fileName the file to write to
+ * Expands the payload message into a vector of bits. Each byte of payload is
+ * split into 8 bits and stored in the expansion vector. This allows us to 
+ * easily walk through the vector, storing each bit in a byte of the image.
+ *
+ * char c = char(1) would be 00000001 in binary
+ * this would be split into {0,0,0,0,0,0,0,1} in the vector
+ *
+ * @param expansion the vector in which bit information is stored
+ * @param payload the payload whose bits will be extracted
  */
-void Steg::expandPayload(std::vector<char> &expansion, 
+void Steg::expandPayload(std::vector<unsigned short> &expansion, 
 	 const std::string &payload)
 {
 	std::vector<char> payloadBytes(payload.begin(), payload.end());
@@ -236,33 +246,90 @@ void Steg::expandPayload(std::vector<char> &expansion,
 	{
 		for (int i = 0; i < 8; i++)
 		{
+			// get the i'th bit and push it to the back of the expansion
 			expansion.push_back(getBit(bytes, i));
 		}
 	}
 }
 
 /**
+ * Extracts a payload from a vector of bytes. The low-order bit of each byte
+ * forms part of a character. One lower-order bit from 8 bytes forms a 
+ * character.
+ * 
+ * @param payload the payload extracted from the bytes
+ * @param modifiedBytes the bytes that have payload data in them
+ */
+bool Steg::extractPayload(std::string &payload, 
+	 const std::vector<char> &modifiedBytes)
+{
+	auto dataStart = bytesToThrowOut(modifiedBytes);
+	std::vector<char> payloadBytes;
+
+	for (int i = dataStart; i < modifiedBytes.size(); i += 8)
+	{
+		char c = char(0);
+
+		for (int j = 0; j < 8; j++)
+		{
+			// set the j'th bit in char c equal to the lowest-order bit at i + j
+			// of the modified bytes. This effectively looks at the next 8 
+			// bytes, and reconstructs a character from their lowest-order bits.
+			setBit(c, j, getBit(modifiedBytes.at(i + j), 0));
+		}
+
+		if (isAscii(c))
+		{
+			payloadBytes.push_back(c);
+		}
+		else
+		{
+			// a non-ascii character was found, so the operation is aborted
+			return false;
+		}
+
+		// stop at a null char
+		if (payloadBytes.back() == '\0')
+		{
+			break;
+		}
+	}
+
+	// construct a string from the characters
+	payload = std::string(payloadBytes.begin(), payloadBytes.end());
+
+	return true;
+}
+
+/**
  * Analyzes the bytes of the file to see what kind of BMP it is, returns the
- * appropriate number of header bits to throw out. The only part of the image
+ * appropriate number of header bytes to throw out. The only part of the image
  * that should be modified is the pixel information. Damaging the header could
  * make the file unreadable, or have other unforseen consequences.
+ *
+ * This method only works on pixel values where each color is 8-bits.
  * 
- * @param bytes the bytes to write
- * @param fileName the file to write to
+ * @param bitmapBytes 
  */
-int Steg::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
+const unsigned int Steg::bytesToThrowOut(const std::vector<char> &bitmapBytes)
 {
-	int throwOut = 0;
+	unsigned int throwOut = 0;
 
-	if (bitmapBytes.size() < 2)
+	if (bitmapBytes.size() < 4)
 	{
 		throw std::runtime_error("Input image too small, check file.");
 	}
 
-	const unsigned int dWord = bitmapBytes.at(1) << 8  | bitmapBytes.at(0);
+	const unsigned int dWord = 
+		bitmapBytes.at(0) << 24 | 
+		bitmapBytes.at(1) << 16 | 
+		bitmapBytes.at(2) << 8  | 
+		bitmapBytes.at(3);
 
-	// these byte values were found on fileformat.info
-	switch(getImgType((unsigned short)(dWord)))
+	// these byte values were found on fileformat.info.
+	// I was not completely thorough with type 2 BMP's, but I haven't managed to
+	// find a type 2 BMP that doesn't work yet.
+	switch(getImgType((unsigned short)(dWord >> 16)))
 	{
 	case 1:
 		throwOut = 10;
@@ -276,6 +343,7 @@ int Steg::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
 		throwOut = dWord;
 		break;
 
+	// this should never happen
 	default:
 		throw std::runtime_error("Non-microsoft BMP input, aborting.");
 		break;
@@ -289,9 +357,9 @@ int Steg::getBytesToThrowOut(const std::vector<char> &bitmapBytes)
  * 
  * @param dWord the first field of a BMP image, which varies from type to type
  */
-const unsigned int Steg::getImgType(const unsigned int word)
+const unsigned short Steg::getImgType(const unsigned short word)
 {
-	unsigned int type = 0;
+	unsigned short type = 0;
 
 	if (word == TYPE_1_BMP)
 	{
@@ -307,51 +375,4 @@ const unsigned int Steg::getImgType(const unsigned int word)
 	}
 
 	return type;
-}
-
-/**
- * Extracts a payload from a vector of bytes. The low-order bit of each byte
- * forms part of a character. One lower-order bit from 8 bytes forms a 
- * character.
- * 
- * @param payload the payload extracted from the bytes
- * @param modifiedBytes the bytes that have payload data in them
- */
-bool Steg::extractPayload(std::string &payload, 
-	 const std::vector<char> &modifiedBytes)
-{
-	auto dataStart = getBytesToThrowOut(modifiedBytes);
-	std::vector<char> payloadBytes;
-
-	for (int i = dataStart; i < modifiedBytes.size(); i += 8)
-	{
-		char c = char(0);
-
-		for (int j = 0; j < 8; j++)
-		{
-			// set the j'th bit in c equal to the lowest-order bit at i + j of
-			// the modified bytes. This effectively looks at the next 8 bytes, 
-			// and reconstructs a character from their lowest-order bits.
-			setBit(c, j, getBit(modifiedBytes.at(i + j), 0));
-		}
-		if (isAscii(c))
-		{
-			payloadBytes.push_back(c);
-		}
-		else
-		{
-			// a non-ascii character was found, and the operation is aborted
-			return false;
-		}
-
-		// stop at a null char
-		if (payloadBytes.back() == '\0')
-		{
-			break;
-		}
-	}
-
-	payload = std::string(payloadBytes.begin(), payloadBytes.end());
-
-	return true;
 }
