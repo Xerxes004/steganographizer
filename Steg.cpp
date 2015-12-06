@@ -100,12 +100,36 @@ void Steg::analyze(const std::string &image)
 		bytes.at(2) << 8  | 
 		bytes.at(3);
 	
-	auto imageType = bitmapType(dWord >> 16);
-	auto throwOut = headerSize(bytes);
+	auto header = headerSize(bytes);
+	
+	unsigned short imageType = 0;
+
+	switch (header)
+	{
+	case 10:
+		imageType = 1;
+		break;
+
+	case 16:
+		imageType = 2;
+		break;
+
+	case 54:
+		imageType = 3;
+		break;
+
+	case 122:
+		imageType = 4;
+		break;
+
+	default:
+		imageType = -1;
+		break;
+	}
 
 	std::cout << "  Analyzing \"" << image << "\"" << std::endl;
 	std::cout << "    Image size : " << bytes.size() << " bytes\n";
-	std::cout << "    Header size: " << throwOut << " bytes" << std::endl;
+	std::cout << "    Header size: " << header << " bytes" << std::endl;
 	std::cout << "    BMP type   : " << imageType << std::endl;
 	std::cout << "    Max payload: " 
 	          << ((bytes.size() - headerSize(bytes)) / 8) - 1
@@ -328,20 +352,15 @@ const unsigned int Steg::headerSize(const std::vector<char> &bitmapBytes)
 		bitmapBytes.at(3);
 
 	// these byte values were found on fileformat.info.
-	// I was not completely thorough with type 2 BMP's, but I haven't managed to
-	// find a type 2 BMP that doesn't work yet.
 	switch(bitmapType((unsigned short)(dWord >> 16)))
 	{
 	case 1:
 		throwOut = 10;
 		break;
 
+	// bitmap types 2, 3, and 4 follow this format
 	case 2:
 		throwOut = 14 + int(bitmapBytes.at(14));
-		break;
-
-	case 3:
-		throwOut = dWord;
 		break;
 
 	// this should never happen
@@ -366,13 +385,9 @@ const unsigned short Steg::bitmapType(const unsigned short word)
 	{
 		type = 1;
 	} 
-	else if (word == TYPE_2_BMP)
+	else if (word == TYPE_234_BMP)
 	{
 		type = 2;
-	}
-	else
-	{
-		type = 3;
 	}
 
 	return type;

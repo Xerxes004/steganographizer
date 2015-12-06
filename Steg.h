@@ -42,7 +42,7 @@ public:
 private:
 	// the appropriate byte values for type 1 and 2 BMP's
 	const unsigned short TYPE_1_BMP = 0;
-	const unsigned short TYPE_2_BMP = ('B' << 8) | 'M';
+	const unsigned short TYPE_234_BMP = ('B' << 8) | 'M';
 
 	void read(std::vector<char> &buffer, const std::string &fileName);
  
