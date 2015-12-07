@@ -1,3 +1,17 @@
+/**
+ * This is the implementation of the Steg class, which is used to store a secret
+ * message in a BMP image using Steganography.
+ *
+ * @author Wesley Kelly
+ * @version 1.0
+ *
+ * File: Steg.cpp
+ * Created: 15 November 2015
+ *
+ * Copyright 2015 Cedarville University, its Computer Science faculty, and the
+ * authors. All rights reserved.
+ */
+
 #include "Steg.h"
 
 //public 
