@@ -60,8 +60,13 @@ int main(int argc, char* argv[])
 				scrub(args, i);
 				break;
 			}
+			if (args.at(i).compare("-h") == 0)
+			{
+				showHelpAndExitWithCode(0);
+			}
 			if (i == args.size() - 1)
 			{
+				std::cout << "Correct args not specified.\n";
 				showHelpAndExitWithCode(1);
 			}
 		}
