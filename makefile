@@ -1,5 +1,8 @@
-#CC=g++
-CC=clang++
+# see readme.txt for information
+# requires Steg.cpp Steg.h main.cpp
+
+CC=g++
+#CC=clang++
 OP=-std=c++11 -stdlib=libc++
 
 all: steg.e
