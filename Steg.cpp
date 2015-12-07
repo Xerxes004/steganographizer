@@ -31,12 +31,15 @@ void Steg::encrypt(const std::string &original, const std::string &courier,
 	// getline does not input a null character, so we have to add one
 	payload += '\0';
 
+	// get the bytes from the input image
 	std::vector<char> originalBytes;
 	read(originalBytes, original);
 
+	// equip the payload to the file bytes
 	std::vector<char> courierBytes;
 	equipPayload(courierBytes, originalBytes, payload);
 
+	// write the equipped bytes to the output image
 	write(courierBytes, courier);
 }
 
@@ -70,7 +73,7 @@ void Steg::decrypt(const std::string &courier, const std::string output)
 			}
 			else
 			{
-				throw std::runtime_error("Output file failed to open, aborting.");
+				throw std::runtime_error("Output file failed to open, abort.");
 			}
 		}
 	}
@@ -100,7 +103,7 @@ void Steg::analyze(const std::string &image)
 		bytes.at(2) << 8  | 
 		bytes.at(3);
 	
-	auto header = headerSize(bytes);
+	auto header = getHeaderSize(bytes);
 	
 	unsigned short imageType = 0;
 
@@ -132,7 +135,7 @@ void Steg::analyze(const std::string &image)
 	std::cout << "    Header size: " << header << " bytes" << std::endl;
 	std::cout << "    BMP type   : " << imageType << std::endl;
 	std::cout << "    Max payload: " 
-	          << ((bytes.size() - headerSize(bytes)) / 8) - 1
+	          << ((bytes.size() - getHeaderSize(bytes)) / 8) - 1
 	          << " characters\n";
 
     bool encrypted = true;
@@ -167,7 +170,7 @@ void Steg::scrub(const std::string &image)
 {
 	std::vector<char> scrubbedBytes;
 	read(scrubbedBytes, image);
-	auto throwOut = headerSize(scrubbedBytes);
+	auto throwOut = getHeaderSize(scrubbedBytes);
 
 	for (int i = throwOut; i < scrubbedBytes.size(); i++)
 	{
@@ -235,7 +238,7 @@ void Steg::equipPayload(std::vector<char> &modifiedBytes,
 	std::vector<unsigned short> expansion;
 	expandPayload(expansion, payload);
 
-	int throwOut = headerSize(originalBytes);
+	int throwOut = getHeaderSize(originalBytes);
 
 	if (modifiedBytes.size() - throwOut < expansion.size())
 	{
@@ -288,7 +291,7 @@ void Steg::expandPayload(std::vector<unsigned short> &expansion,
 bool Steg::extractPayload(std::string &payload, 
 	 const std::vector<char> &modifiedBytes)
 {
-	auto dataStart = headerSize(modifiedBytes);
+	auto dataStart = getHeaderSize(modifiedBytes);
 	std::vector<char> payloadBytes;
 
 	for (int i = dataStart; i < modifiedBytes.size(); i += 8)
@@ -336,7 +339,7 @@ bool Steg::extractPayload(std::string &payload,
  * 
  * @param bitmapBytes 
  */
-const unsigned int Steg::headerSize(const std::vector<char> &bitmapBytes)
+const unsigned int Steg::getHeaderSize(const std::vector<char> &bitmapBytes)
 {
 	unsigned int throwOut = 0;
 
@@ -352,7 +355,7 @@ const unsigned int Steg::headerSize(const std::vector<char> &bitmapBytes)
 		bitmapBytes.at(3);
 
 	// these byte values were found on fileformat.info.
-	switch(bitmapType((unsigned short)(dWord >> 16)))
+	switch(getBitmapType((unsigned short)(dWord >> 16)))
 	{
 	case 1:
 		throwOut = 10;
@@ -377,7 +380,7 @@ const unsigned int Steg::headerSize(const std::vector<char> &bitmapBytes)
  * 
  * @param word the first field of a BMP image, which varies from type to type
  */
-const unsigned short Steg::bitmapType(const unsigned short word)
+const unsigned short Steg::getBitmapType(const unsigned short word)
 {
 	unsigned short type = 0;
 

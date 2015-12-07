@@ -30,10 +30,10 @@
 class Steg
 {
 public:
-	void encrypt(const std::string &originalImg, const std::string &courier, 
-		 const std::string input = "");
+	void encrypt(const std::string &original, const std::string &courier, 
+   	 	 const std::string input = "");
 
-	void decrypt(const std::string &courierImg, const std::string output = "");
+	void decrypt(const std::string &courier, const std::string output = "");
 
 	void analyze(const std::string &image);
 
@@ -52,14 +52,14 @@ private:
  	 	 const std::vector<char> &originalBytes, const std::string payload);
 
 	void expandPayload(std::vector<unsigned short> &expansion, 
-	     const std::string &payload);
+	 	 const std::string &payload);
 	
 	bool extractPayload(std::string &payload, 
 	 	 const std::vector<char> &modifiedBytes);
 
-	const unsigned int headerSize(const std::vector<char> &bitmapBytes);
+	const unsigned int getHeaderSize(const std::vector<char> &bitmapBytes);
 
-	const unsigned short bitmapType(const unsigned short word);
+	const unsigned short getBitmapType(const unsigned short word);
 
 	/**
 	 * Gets the bit at the position specified. Position 0 is the right-most bit.
